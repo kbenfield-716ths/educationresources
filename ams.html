@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMS & HACE — Brain Pathophysiology</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #050a12;
+    --surface: #0c1520;
+    --border: #1a2d45;
+    --text: #c8ddf0;
+    --text-dim: #5a7a9a;
+    --accent: #3a9eff;
+    --warn: #ff8c42;
+    --danger: #ff3b5c;
+    --normal: #4dffb4;
+    --edema: rgba(58, 158, 255, 0.15);
+    --vessel: #e05050;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    color: #e8f4ff;
+    letter-spacing: 0.02em;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .stage-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.2rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .stage-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    padding: 0.45rem 1rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-transform: uppercase;
+  }
+
+  .stage-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .stage-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(58,158,255,0.08); }
+  .stage-btn.warn { }
+  .stage-btn.warn.active { border-color: var(--warn); color: var(--warn); background: rgba(255,140,66,0.08); }
+  .stage-btn.danger.active { border-color: var(--danger); color: var(--danger); background: rgba(255,59,92,0.08); }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1fr minmax(280px, 360px);
+    gap: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 70vh;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    border-right: 1px solid var(--border);
+  }
+
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .info-panel {
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    overflow-y: auto;
+    max-height: 600px;
+  }
+
+  .stage-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    line-height: 1.2;
+    transition: all 0.4s;
+  }
+
+  .stage-title .label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+  }
+
+  .altitude-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+  }
+
+  .alt-fill {
+    height: 4px;
+    background: var(--accent);
+    transition: width 0.6s ease;
+    border-radius: 2px;
+  }
+
+  .alt-track {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .findings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .finding-item {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    font-size: 0.73rem;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateX(12px);
+    animation: slideIn 0.4s forwards;
+  }
+
+  @keyframes slideIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  .dot.normal { background: var(--normal); }
+  .dot.warn { background: var(--warn); }
+  .dot.danger { background: var(--danger); }
+  .dot.info { background: var(--accent); }
+
+  .mechanisms {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  .mech-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.7rem;
+  }
+
+  .mech-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .mech-step {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--border);
+    line-height: 1.4;
+    opacity: 0;
+    animation: fadeUp 0.5s forwards;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .mech-step.highlight {
+    border-left-color: var(--accent);
+    color: var(--text);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    padding: 1rem 2rem;
+    border-top: 1px solid var(--border);
+    max-width: 1200px;
+    margin: 0 auto;
+    justify-content: center;
+  }
+
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+
+  .leg-swatch {
+    width: 20px;
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  .progress-bar {
+    display: flex;
+    gap: 3px;
+    padding: 1rem 2rem 0;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .progress-seg {
+    height: 3px;
+    flex: 1;
+    background: var(--border);
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+
+  .progress-seg.done { background: var(--accent); }
+  .progress-seg.active-warn { background: var(--warn); }
+  .progress-seg.active-danger { background: var(--danger); }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (max-width: 700px) {
+    .main { grid-template-columns: 1fr; }
+    .canvas-wrap { border-right: none; border-bottom: 1px solid var(--border); }
+    .info-panel { max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Altitude & the Brain</h1>
+  <p>Pathophysiology of AMS → HACE · Interactive Visualization</p>
+</header>
+
+<div class="stage-nav">
+  <button class="stage-btn active" onclick="setStage(0)">① Normal</button>
+  <button class="stage-btn warn" onclick="setStage(1)">② Hypoxia</button>
+  <button class="stage-btn warn" onclick="setStage(2)">③ Early AMS</button>
+  <button class="stage-btn warn" onclick="setStage(3)">④ Moderate AMS</button>
+  <button class="stage-btn danger" onclick="setStage(4)">⑤ HACE</button>
+  <button class="stage-btn danger" onclick="setStage(5)">⑥ Severe HACE</button>
+</div>
+
+<div class="progress-bar" id="progressBar">
+  <div class="progress-seg"></div>
+  <div class="progress-seg"></div>
+  <div class="progress-seg"></div>
+  <div class="progress-seg"></div>
+  <div class="progress-seg"></div>
+  <div class="progress-seg"></div>
+</div>
+
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="brain" width="520" height="520"></canvas>
+  </div>
+  <div class="info-panel" id="infoPanel">
+    <!-- Filled by JS -->
+  </div>
+</div>
+
+<div class="legend">
+  <div class="leg-item"><div class="leg-swatch" style="background:#d0d0d4"></div>White matter</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:#a8a4a8"></div>Grey matter / cortex</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:#ff3232"></div>Arteries (ACA, MCA, basilar)</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:#4060d0"></div>Veins / dural sinuses</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:#3a9eff"></div>Vasogenic edema</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:#ff3b5c"></div>Petechiae / herniation</div>
+</div>
+
+<footer>
+  Educational visualization · AMS: Acute Mountain Sickness · HACE: High-Altitude Cerebral Edema<br>
+  Not for clinical use · Based on published pathophysiology literature
+</footer>
+
+<script>
+const canvas = document.getElementById('brain');
+const ctx = canvas.getContext('2d');
+const W = 520, H = 520;
+let currentStage = 0;
+let animFrame = 0;
+let animId;
+
+const stageData = [
+  {
+    name: 'Normal Brain',
+    label: 'Sea Level / Low Altitude',
+    labelColor: '#4dffb4',
+    altitude: '< 2,500 m',
+    altPct: 0.05,
+    findings: [
+      { type: 'normal', text: 'Normal ICP (~10 mmHg)' },
+      { type: 'normal', text: 'Intact blood-brain barrier (BBB)' },
+      { type: 'normal', text: 'Autoregulation maintains CBF' },
+      { type: 'normal', text: 'Normal CSF dynamics' },
+      { type: 'info', text: 'O₂ saturation >96% at sea level' },
+    ],
+    mechanisms: [
+      { h: false, t: 'Normal cerebrovascular autoregulation' },
+      { h: false, t: 'CO₂ / pH balanced ventilatory drive' },
+      { h: false, t: 'AQP4 water channels at equilibrium' },
+    ],
+    edemaFactor: 0,
+    vesselDilate: 0,
+    hypoxiaFlush: 0,
+    herniation: 0,
+    petechiae: 0,
+  },
+  {
+    name: 'Acute Hypoxia',
+    label: 'Ascent Phase',
+    labelColor: '#ff8c42',
+    altitude: '2,500 – 3,500 m',
+    altPct: 0.35,
+    findings: [
+      { type: 'warn', text: 'SpO₂ drops to ~85–90%' },
+      { type: 'warn', text: 'HIF-1α upregulation begins' },
+      { type: 'warn', text: 'Cerebral vasodilation (↑CBF)' },
+      { type: 'info', text: 'Compensatory hyperventilation' },
+      { type: 'info', text: 'Respiratory alkalosis develops' },
+    ],
+    mechanisms: [
+      { h: true, t: 'Hypoxia → ↑HIF-1α → VEGF release' },
+      { h: false, t: 'Vasodilation: ↑NO, ↓PaCO₂ offset' },
+      { h: false, t: 'BBB stress begins; tight junctions affected' },
+    ],
+    edemaFactor: 0.05,
+    vesselDilate: 0.3,
+    hypoxiaFlush: 0.3,
+    herniation: 0,
+    petechiae: 0,
+  },
+  {
+    name: 'Early AMS',
+    label: 'Acute Mountain Sickness',
+    labelColor: '#ff8c42',
+    altitude: '3,000 – 4,500 m',
+    altPct: 0.5,
+    findings: [
+      { type: 'warn', text: 'Headache (cardinal symptom)' },
+      { type: 'warn', text: 'Nausea, fatigue, dizziness' },
+      { type: 'warn', text: 'VEGF-driven mild vasogenic edema' },
+      { type: 'warn', text: 'Mild ↑ICP; CSF buffers partially' },
+      { type: 'info', text: 'Lake Louise Score 3–5' },
+    ],
+    mechanisms: [
+      { h: true, t: 'VEGF → BBB permeability ↑ (vasogenic edema)' },
+      { h: true, t: 'Fluid shifts to brain interstitium' },
+      { h: false, t: 'SNS activation → fluid retention (ADH ↑)' },
+    ],
+    edemaFactor: 0.2,
+    vesselDilate: 0.5,
+    hypoxiaFlush: 0.45,
+    herniation: 0,
+    petechiae: 0,
+  },
+  {
+    name: 'Moderate AMS',
+    label: 'Worsening Cerebral Stress',
+    labelColor: '#ff8c42',
+    altitude: '4,000 – 5,500 m',
+    altPct: 0.67,
+    findings: [
+      { type: 'warn', text: 'Severe pounding headache' },
+      { type: 'warn', text: 'Persistent vomiting, malaise' },
+      { type: 'danger', text: 'Cytotoxic edema component emerging' },
+      { type: 'danger', text: 'ICP rising, venous outflow compromised' },
+      { type: 'warn', text: 'AQP4 channels overwhelmed' },
+    ],
+    mechanisms: [
+      { h: true, t: 'Cytotoxic edema: cellular Na⁺/K⁺-ATPase failure' },
+      { h: true, t: 'Interstitial + intracellular fluid accumulation' },
+      { h: false, t: 'Venous hypertension reduces CSF resorption' },
+    ],
+    edemaFactor: 0.5,
+    vesselDilate: 0.7,
+    hypoxiaFlush: 0.65,
+    herniation: 0,
+    petechiae: 0.1,
+  },
+  {
+    name: 'HACE',
+    label: 'High-Altitude Cerebral Edema',
+    labelColor: '#ff3b5c',
+    altitude: '> 4,500 m',
+    altPct: 0.82,
+    findings: [
+      { type: 'danger', text: 'Ataxia — hallmark of HACE' },
+      { type: 'danger', text: 'Altered consciousness, confusion' },
+      { type: 'danger', text: 'White matter T2 signal on MRI (corpus callosum)' },
+      { type: 'danger', text: 'Markedly elevated ICP; sulci effaced' },
+      { type: 'danger', text: 'Microhemorrhages (petechiae) in corpus callosum' },
+    ],
+    mechanisms: [
+      { h: true, t: 'Vasogenic + cytotoxic edema: both pathways' },
+      { h: true, t: 'Corpus callosum: stretch injury from ↑ICP' },
+      { h: false, t: 'Cerebral venous thrombosis contributes in some' },
+    ],
+    edemaFactor: 0.78,
+    vesselDilate: 0.85,
+    hypoxiaFlush: 0.85,
+    herniation: 0.3,
+    petechiae: 0.6,
+  },
+  {
+    name: 'Severe HACE',
+    label: 'Impending Herniation',
+    labelColor: '#ff3b5c',
+    altitude: '> 5,000 m (untreated)',
+    altPct: 1.0,
+    findings: [
+      { type: 'danger', text: 'Coma / obtundation' },
+      { type: 'danger', text: 'Uncal or tonsillar herniation risk' },
+      { type: 'danger', text: 'Brainstem compression' },
+      { type: 'danger', text: 'Diffuse axonal injury' },
+      { type: 'danger', text: 'Death without immediate descent + Dex + O₂' },
+    ],
+    mechanisms: [
+      { h: true, t: 'Transtentorial herniation: uncus compresses CN III' },
+      { h: true, t: 'Brainstem: Duret hemorrhages possible' },
+      { h: false, t: 'Rx: Immediate descent ≥300m, Dexamethasone, O₂, Gamow bag' },
+    ],
+    edemaFactor: 1.0,
+    vesselDilate: 1.0,
+    hypoxiaFlush: 1.0,
+    herniation: 1.0,
+    petechiae: 1.0,
+  },
+];
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+let renderState = { ...stageData[0] };
+let targetState = { ...stageData[0] };
+let transitionT = 1;
+
+function setStage(i) {
+  currentStage = i;
+  targetState = stageData[i];
+  transitionT = 0;
+
+  // Update buttons
+  document.querySelectorAll('.stage-btn').forEach((b, idx) => {
+    b.classList.toggle('active', idx === i);
+  });
+
+  // Update progress
+  const segs = document.querySelectorAll('.progress-seg');
+  segs.forEach((s, idx) => {
+    s.className = 'progress-seg';
+    if (idx < i) s.classList.add('done');
+    if (idx === i) {
+      if (i >= 4) s.classList.add('active-danger');
+      else if (i >= 1) s.classList.add('active-warn');
+      else s.classList.add('done');
+    }
+  });
+
+  renderInfoPanel(stageData[i]);
+}
+
+function renderInfoPanel(data) {
+  const panel = document.getElementById('infoPanel');
+  const color = data.labelColor;
+  const altW = Math.round(data.altPct * 100);
+
+  let findingsHTML = data.findings.map((f, i) =>
+    `<div class="finding-item" style="animation-delay:${i * 0.07}s">
+      <div class="dot ${f.type}"></div>
+      <span>${f.text}</span>
+    </div>`
+  ).join('');
+
+  let mechHTML = data.mechanisms.map((m, i) =>
+    `<div class="mech-step ${m.h ? 'highlight' : ''}" style="animation-delay:${0.3 + i * 0.1}s">${m.t}</div>`
+  ).join('');
+
+  panel.innerHTML = `
+    <div class="stage-title" style="color:${color}">
+      <span class="label">Current Stage</span>
+      ${data.name}
+    </div>
+    <div class="altitude-bar">
+      <span>Altitude</span>
+      <div class="alt-track"><div class="alt-fill" style="width:${altW}%; background:${color}"></div></div>
+      <span>${data.altitude}</span>
+    </div>
+    <div class="findings">${findingsHTML}</div>
+    <div class="mechanisms">
+      <div class="mech-label">Pathophysiology</div>
+      <div class="mech-flow">${mechHTML}</div>
+    </div>
+  `;
+}
+
+// ─── Drawing ──────────────────────────────────────────────────────────────────
+
+function drawBrain() {
+  ctx.clearRect(0, 0, W, H);
+  animFrame++;
+
+  renderState.edemaFactor  = lerp(renderState.edemaFactor,  targetState.edemaFactor,  0.04);
+  renderState.vesselDilate = lerp(renderState.vesselDilate, targetState.vesselDilate, 0.04);
+  renderState.hypoxiaFlush = lerp(renderState.hypoxiaFlush, targetState.hypoxiaFlush, 0.04);
+  renderState.herniation   = lerp(renderState.herniation,   targetState.herniation,   0.04);
+  renderState.petechiae    = lerp(renderState.petechiae,    targetState.petechiae,    0.04);
+
+  const ef   = renderState.edemaFactor;
+  const vd   = renderState.vesselDilate;
+  const hf   = renderState.hypoxiaFlush;
+  const hern = renderState.herniation;
+  const pet  = renderState.petechiae;
+
+  ctx.fillStyle = '#050a12';
+  ctx.fillRect(0, 0, W, H);
+
+  const bs = 1 + ef * 0.055; // brain swells with edema
+  const BCX = 215, BCY = 205; // hemisphere centre
+
+  // ═══════════════════════════════════════════════════
+  // COLOUR PALETTE
+  // ═══════════════════════════════════════════════════
+  // light grey hemisphere base colour (replaces pink)
+  const hR = Math.round(lerp(195, 205, hf * 0.1));
+  const hG = Math.round(lerp(195, 190, hf * 0.1));
+  const hB = Math.round(lerp(198, 192, hf * 0.1));
+
+  const cbR = 188, cbG = 178, cbB = 170;
+  const bsStress = hern > 0.4;
+  const bsR = bsStress ? Math.round(lerp(212,242,hern-0.4)) : 212;
+  const bsG = bsStress ? Math.round(lerp(148, 52,hern-0.4)) : 148;
+  const bsB = bsStress ? Math.round(lerp( 78, 52,hern-0.4)) :  78;
+
+  // vessel widths / pulse
+  const vw  = 1.5 + vd * 4.8;
+  const vP  = 1 + Math.sin(animFrame * 0.07) * 0.18 * vd;
+  const aCol = `rgba(${Math.round(lerp(215,255,vd))},35,35,${0.88+vd*0.12})`;
+  const vCol = `rgba(45,${Math.round(lerp(75,95,vd))},${Math.round(lerp(205,242,vd))},${0.82+vd*0.18})`;
+
+  const labelY = 'rgba(255,230,60,0.92)'; // yellow for all part labels
+
+  // ═══════════════════════════════════════════════════
+  // HEMISPHERE — drawn FIRST so brainstem/cerebellum
+  // overlay it. 25% thinner (148 → 111). Light grey.
+  // ═══════════════════════════════════════════════════
+  ctx.save();
+  ctx.translate(BCX, BCY); ctx.scale(bs, bs); ctx.translate(-BCX, -BCY);
+
+  ctx.beginPath();
+  ctx.ellipse(BCX, BCY, 190, 111, -0.08, 0, Math.PI*2);
+
+  const hGrad = ctx.createRadialGradient(BCX-30, BCY-30, 15, BCX, BCY, 195);
+  hGrad.addColorStop(0,    `rgb(${hR+18},${hG+18},${hB+18})`);
+  hGrad.addColorStop(0.55, `rgb(${hR},${hG},${hB})`);
+  hGrad.addColorStop(1,    `rgb(${hR-20},${hG-20},${hB-20})`);
+  ctx.fillStyle = hGrad;
+  ctx.fill();
+
+  // edema blue wash
+  if (ef > 0.01) {
+    const edGrad = ctx.createRadialGradient(BCX, BCY, 50, BCX, BCY, 200);
+    edGrad.addColorStop(0,   'rgba(58,158,255,0)');
+    edGrad.addColorStop(0.5, `rgba(58,158,255,${ef*0.08})`);
+    edGrad.addColorStop(1,   `rgba(58,158,255,${ef*0.28})`);
+    ctx.fillStyle = edGrad; ctx.fill();
+  }
+
+  ctx.strokeStyle = `rgba(${hR-40},${hG-40},${hB-40},0.7)`;
+  ctx.lineWidth = 1.8; ctx.stroke();
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════
+  // VESSELS clipped to hemisphere — drawn before foreground structures
+  // ═══════════════════════════════════════════════════
+  ctx.save();
+  ctx.translate(BCX, BCY); ctx.scale(bs, bs); ctx.translate(-BCX, -BCY);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+  ctx.beginPath();
+  ctx.ellipse(BCX, BCY, 192, 113, -0.08, 0, Math.PI*2);
+  ctx.clip();
+
+  // MCA trunk
+  ctx.beginPath();
+  ctx.moveTo(BCX - 80, BCY + 42);
+  ctx.bezierCurveTo(BCX-85, BCY+15, BCX-88, BCY-15, BCX-75, BCY-42);
+  ctx.bezierCurveTo(BCX-65, BCY-65, BCX-50, BCY-84, BCX-30, BCY-96);
+  ctx.strokeStyle = aCol; ctx.lineWidth = vw*vP; ctx.stroke();
+
+  // MCA posterior branch
+  ctx.beginPath();
+  ctx.moveTo(BCX - 80, BCY + 42);
+  ctx.bezierCurveTo(BCX-40, BCY+36, BCX+10, BCY+33, BCX+60, BCY+36);
+  ctx.bezierCurveTo(BCX+100, BCY+40, BCX+138, BCY+48, BCX+162, BCY+60);
+  ctx.strokeStyle = aCol; ctx.lineWidth = (vw-0.5)*vP; ctx.stroke();
+
+  // ACA along superior edge
+  ctx.beginPath();
+  ctx.moveTo(BCX - 150, BCY - 8);
+  ctx.bezierCurveTo(BCX-148, BCY-38, BCX-135, BCY-70, BCX-110, BCY-90);
+  ctx.bezierCurveTo(BCX-88, BCY-106, BCX-58, BCY-111, BCX-20, BCY-111);
+  ctx.bezierCurveTo(BCX+20, BCY-111, BCX+58, BCY-102, BCX+88, BCY-86);
+  ctx.strokeStyle = aCol; ctx.lineWidth = (vw-0.6)*vP; ctx.stroke();
+
+  // PCA — posterior inferior
+  ctx.beginPath();
+  ctx.moveTo(BCX + 130, BCY + 22);
+  ctx.bezierCurveTo(BCX+155, BCY+46, BCX+168, BCY+72, BCX+160, BCY+96);
+  ctx.strokeStyle = aCol; ctx.lineWidth = (vw-0.7)*vP; ctx.stroke();
+
+  // Superficial veins
+  [[BCX-60,BCY+30,BCX-68,BCY-60],
+   [BCX+20,BCY+26,BCX+10,BCY-76],
+   [BCX+100,BCY+30,BCX+90,BCY-68],
+  ].forEach(([x1,y1,x2,y2]) => {
+    ctx.beginPath(); ctx.moveTo(x1,y1);
+    ctx.bezierCurveTo(x1-5,y1-30, x2+5,y2+30, x2,y2);
+    ctx.strokeStyle = vCol; ctx.lineWidth = (vw-0.8)*vP; ctx.stroke();
+  });
+
+  // Superior sagittal sinus
+  ctx.beginPath();
+  ctx.moveTo(BCX-168, BCY-22);
+  ctx.bezierCurveTo(BCX-155, BCY-76, BCX-100, BCY-111, BCX-10, BCY-111);
+  ctx.bezierCurveTo(BCX+80, BCY-111, BCX+148, BCY-82, BCX+175, BCY-28);
+  ctx.strokeStyle = vCol; ctx.lineWidth = (vw+0.8)*vP; ctx.stroke();
+
+  ctx.restore(); // end clip
+
+  // hemisphere label
+  ctx.save();
+  ctx.font = '9px DM Mono, monospace'; ctx.fillStyle = labelY; ctx.textAlign = 'left';
+  ctx.fillText('cerebral hemisphere', BCX - 188, BCY - 118);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════
+  // CEREBELLUM — drawn AFTER hemisphere so it overlays
+  // ═══════════════════════════════════════════════════
+  ctx.save();
+  ctx.translate(BCX, BCY); ctx.scale(bs, bs); ctx.translate(-BCX, -BCY);
+
+  const cbCX = 342, cbCY = 290;
+  ctx.beginPath();
+  ctx.ellipse(cbCX, cbCY, 68, 62, 0.1, 0, Math.PI*2);
+  const cbGr = ctx.createRadialGradient(cbCX-12, cbCY-14, 8, cbCX, cbCY, 68);
+  cbGr.addColorStop(0, `rgb(${cbR+20},${cbG+16},${cbB+16})`);
+  cbGr.addColorStop(1, `rgb(${cbR-14},${cbG-16},${cbB-12})`);
+  ctx.fillStyle = cbGr; ctx.fill();
+  if (ef > 0.01) { ctx.fillStyle = `rgba(58,158,255,${ef*0.2})`; ctx.fill(); }
+
+  const fA = Math.max(0.08, 0.44 - ef*0.38);
+  for (let i = 0; i < 14; i++) {
+    const angle = 0.08 + (i/14)*Math.PI*1.92;
+    ctx.beginPath(); ctx.arc(cbCX, cbCY, 22+i*2.8, angle-0.13, angle+0.13);
+    ctx.strokeStyle = `rgba(${cbR-48},${cbG-48},${cbB-44},${fA})`;
+    ctx.lineWidth = 1.2; ctx.stroke();
+  }
+  ctx.strokeStyle = `rgba(${cbR-36},${cbG-40},${cbB-34},0.55)`;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.ellipse(cbCX, cbCY, 68, 62, 0.1, 0, Math.PI*2); ctx.stroke();
+
+  // cerebellar tonsil (herniation)
+  const tY = cbCY + 58 + hern*26;
+  ctx.beginPath();
+  ctx.ellipse(cbCX-18, tY, 16+hern*10, 18+hern*22, 0.05, 0, Math.PI*2);
+  ctx.fillStyle = hern > 0.22
+    ? `rgba(${Math.round(lerp(cbR,238,hern))},${Math.round(lerp(cbG,50,hern))},${Math.round(lerp(cbB,50,hern))},0.92)`
+    : `rgb(${cbR},${cbG},${cbB})`;
+  ctx.fill();
+  if (hern > 0.18) {
+    ctx.strokeStyle = `rgba(255,68,68,${hern*0.8})`; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  ctx.font = '9px DM Mono, monospace';
+  ctx.fillStyle = labelY; ctx.textAlign = 'center';
+  ctx.fillText('cerebellum', cbCX, cbCY - 70);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════
+  // BRAINSTEM — drawn AFTER hemisphere so it overlays
+  // ═══════════════════════════════════════════════════
+  ctx.save();
+  ctx.translate(BCX, BCY); ctx.scale(bs, bs); ctx.translate(-BCX, -BCY);
+
+  const bsCX = 258;
+  ctx.beginPath(); ctx.ellipse(bsCX, 306, 22, 22, 0.05, 0, Math.PI*2);
+  ctx.fillStyle = `rgb(${bsR},${bsG},${bsB})`; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bsCX, 344, 27, 24, 0.05, 0, Math.PI*2);
+  ctx.fillStyle = `rgb(${bsR-4},${bsG-4},${bsB-4})`; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bsCX, 380, 20, 22, 0.05, 0, Math.PI*2);
+  ctx.fillStyle = `rgb(${bsR-9},${bsG-9},${bsB-9})`; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bsCX, 344, 30, 62, 0.05, 0, Math.PI*2);
+  ctx.strokeStyle = bsStress ? `rgba(255,80,80,${hern*0.9})` : `rgba(${bsR-40},${bsG-38},${bsB-28},0.4)`;
+  ctx.lineWidth = 1; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bsCX-10, 398); ctx.lineTo(bsCX-10, 500);
+  ctx.moveTo(bsCX+10, 398); ctx.lineTo(bsCX+10, 500);
+  ctx.strokeStyle = `rgb(${bsR-14},${bsG-14},${bsB-14})`;
+  ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
+
+  ctx.font = '9px DM Mono, monospace';
+  ctx.fillStyle = bsStress ? 'rgba(255,90,90,0.9)' : labelY;
+  ctx.textAlign = 'left';
+  ctx.fillText('brainstem', bsCX + 34, 346);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════
+  // CORPUS CALLOSUM
+  // ═══════════════════════════════════════════════════
+  const ccPet = pet > 0.3;
+  const ccR = ccPet ? Math.round(lerp(245,255,pet)) : 245;
+  const ccG = ccPet ? Math.round(lerp(238, 52,pet)) : 238;
+  const ccB = ccPet ? Math.round(lerp(230, 52,pet)) : 230;
+
+  ctx.save();
+  ctx.translate(BCX, BCY); ctx.scale(bs, bs); ctx.translate(-BCX, -BCY);
+  ctx.beginPath();
+  ctx.ellipse(BCX - 10, BCY + 46, 80, 12, -0.1, 0, Math.PI*2);
+  ctx.fillStyle = `rgba(${ccR},${ccG},${ccB},0.88)`; ctx.fill();
+  ctx.strokeStyle = `rgba(${ccR-30},${ccG-30},${ccB-28},0.35)`;
+  ctx.lineWidth = 0.8; ctx.stroke();
+
+  if (ccPet) {
+    const nP = Math.floor(pet * 12);
+    for (let i = 0; i < nP; i++) {
+      const px = BCX - 72 + (i/nP)*148 + Math.sin(i*2.5)*3;
+      const py = BCY + 44 + Math.cos(i*3)*5;
+      const pulse = 1 + Math.sin(animFrame*0.07+i)*0.35;
+      ctx.beginPath(); ctx.arc(px, py, 2.2*pulse, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,38,62,${0.82*pet})`; ctx.fill();
+    }
+  }
+
+  ctx.font = '9px DM Mono, monospace';
+  ctx.fillStyle = ccPet ? 'rgba(255,88,88,0.9)' : labelY;
+  ctx.textAlign = 'left';
+  ctx.fillText(ccPet ? 'corpus callosum hemorrhage' : 'corpus callosum', BCX + 76, BCY + 50);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════
+  // TENTORIUM
+  // ═══════════════════════════════════════════════════
+  ctx.save();
+  ctx.translate(BCX, BCY); ctx.scale(bs, bs); ctx.translate(-BCX, -BCY);
+  ctx.beginPath();
+  ctx.moveTo(BCX - 130, BCY + 108);
+  ctx.bezierCurveTo(BCX - 60, BCY + 100, BCX + 20, BCY + 98, BCX + 80, BCY + 102);
+  ctx.bezierCurveTo(BCX + 110, BCY + 105, BCX + 128, BCY + 112, BCX + 130, BCY + 120);
+  ctx.strokeStyle = `rgba(255,200,78,${0.28+hern*0.58})`;
+  ctx.setLineDash([5,3]); ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+  if (hern > 0.1) {
+    ctx.font = '9px DM Mono, monospace';
+    ctx.fillStyle = `rgba(255,220,60,${hern*0.88})`;
+    ctx.textAlign = 'left';
+    ctx.fillText('tentorium', BCX - 130, BCY + 96);
+  }
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════
+  // TONSILLAR HERNIATION ARROW
+  // ═══════════════════════════════════════════════════
+  if (hern > 0.22) {
+    ctx.save();
+    ctx.translate(BCX, BCY); ctx.scale(bs, bs); ctx.translate(-BCX, -BCY);
+    const aT = cbCY + 72 + hern*30;
+    ctx.beginPath();
+    ctx.moveTo(cbCX - 18, cbCY + 64);
+    ctx.lineTo(cbCX - 18, aT);
+    ctx.strokeStyle = `rgba(255,52,72,${hern})`; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cbCX-25, aT-5); ctx.lineTo(cbCX-18, aT+5); ctx.lineTo(cbCX-11, aT-5);
+    ctx.fillStyle = `rgba(255,52,72,${hern})`; ctx.fill();
+    ctx.font = '9px DM Mono, monospace';
+    ctx.fillStyle = `rgba(255,80,80,${hern*0.92})`;
+    ctx.textAlign = 'left';
+    ctx.fillText('tonsillar herniation', cbCX - 4, aT);
+    ctx.restore();
+  }
+
+  if (vd > 0.28) {
+    ctx.save(); ctx.font = '9px DM Mono, monospace';
+    ctx.fillStyle = `rgba(255,108,68,${(vd-0.28)*1.5})`;
+    ctx.textAlign = 'left'; ctx.fillText('↑ vasodilation', 58, 42);
+    ctx.restore();
+  }
+
+  // ═══════════════════════════════════════════════════
+  // EDEMA ARROWS (peripheral, outward)
+  // ═══════════════════════════════════════════════════
+  if (ef > 0.13) {
+    const eA = (ef-0.13)*1.4;
+    [
+      {x: BCX-168, y: BCY-20,  a: -Math.PI*0.85},
+      {x: BCX+30,  y: BCY-148, a: -Math.PI*0.5},
+      {x: BCX+188, y: BCY-20,  a: -Math.PI*0.15},
+      {x: BCX-60,  y: BCY+138, a:  Math.PI*0.65},
+      {x: BCX+80,  y: BCY+138, a:  Math.PI*0.35},
+    ].forEach(ap => {
+      ctx.save(); ctx.translate(ap.x, ap.y); ctx.rotate(ap.a);
+      const pu = 1+Math.sin(animFrame*0.09)*0.22;
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-14*pu);
+      ctx.strokeStyle = `rgba(58,158,255,${eA*0.85})`; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-4,-10*pu); ctx.lineTo(0,-16*pu); ctx.lineTo(4,-10*pu);
+      ctx.fillStyle = `rgba(58,158,255,${eA*0.85})`; ctx.fill();
+      ctx.restore();
+    });
+    ctx.save(); ctx.font = '9px DM Mono, monospace';
+    ctx.fillStyle = `rgba(58,158,255,${eA*0.92})`;
+    ctx.textAlign = 'left'; ctx.fillText('vasogenic edema', 58, 62);
+    ctx.restore();
+  }
+
+  // ═══════════════════════════════════════════════════
+  // ICP & SpO2 GAUGES
+  // ═══════════════════════════════════════════════════
+  const icpVal  = Math.round(10 + ef * 60);
+  const spo2Val = Math.round(98 - ef * 28);
+  const gY = 42, bH = 68;
+
+  ctx.save();
+  const s2Col = spo2Val<80?'#ff3b5c':spo2Val<90?'#ff8c42':'#4dffb4';
+  ctx.font='bold 10px DM Mono, monospace'; ctx.fillStyle=s2Col; ctx.textAlign='center';
+  ctx.fillText('SpO₂',26,gY); ctx.font='bold 14px DM Mono, monospace';
+  ctx.fillText(`${spo2Val}%`,26,gY+15); ctx.font='8px DM Mono, monospace';
+  ctx.fillStyle='rgba(150,180,200,0.5)'; ctx.fillText('sat',26,gY+27);
+  const s2F = spo2Val/100;
+  ctx.fillStyle='rgba(20,40,60,0.85)'; ctx.fillRect(19,gY+33,14,bH);
+  ctx.fillStyle=s2Col; ctx.fillRect(19,gY+33+bH*(1-s2F),14,bH*s2F);
+  ctx.restore();
+
+  ctx.save();
+  const icCol = ef>0.5?'#ff3b5c':ef>0.15?'#ff8c42':'#4dffb4';
+  ctx.font='bold 10px DM Mono, monospace'; ctx.fillStyle=icCol; ctx.textAlign='center';
+  ctx.fillText('ICP',W-26,gY); ctx.font='bold 14px DM Mono, monospace';
+  ctx.fillText(`${icpVal}`,W-26,gY+15); ctx.font='8px DM Mono, monospace';
+  ctx.fillStyle='rgba(150,180,200,0.5)'; ctx.fillText('mmHg',W-26,gY+27);
+  const icF = Math.min(1,ef*1.2);
+  ctx.fillStyle='rgba(20,40,60,0.85)'; ctx.fillRect(W-33,gY+33,14,bH);
+  ctx.fillStyle=icCol; ctx.fillRect(W-33,gY+33+bH*(1-icF),14,bH*icF);
+  ctx.restore();
+
+  // Stage label
+  const s = targetState;
+  ctx.save();
+  ctx.font='bold 11px DM Mono, monospace'; ctx.fillStyle=s.labelColor; ctx.textAlign='center';
+  ctx.fillText(s.name.toUpperCase(), W/2, H-18);
+  ctx.font='9px DM Mono, monospace'; ctx.fillStyle='rgba(150,180,200,0.45)';
+  ctx.fillText(s.altitude, W/2, H-5);
+  ctx.restore();
+
+  animId = requestAnimationFrame(drawBrain);
+}
+
+
+
+
+
+// ── Arrow key navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && currentStage < 5) setStage(currentStage + 1);
+  if (e.key === 'ArrowLeft' && currentStage > 0) setStage(currentStage - 1);
+});
+
+// Init
+renderInfoPanel(stageData[0]);
+renderState = {
+  edemaFactor: 0, vesselDilate: 0, hypoxiaFlush: 0, herniation: 0, petechiae: 0
+};
+drawBrain();
+</script>
+</body>
+</html>
