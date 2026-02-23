@@ -884,7 +884,7 @@ function drawBrain() {
 
   ctx.save();
   const s2Col = spo2Val<80?'#ff3b5c':spo2Val<90?'#ff8c42':'#4dffb4';
-  ctx.font='bold 10px DM Mono, monospace'; ctx.fillStyle=s2Col; ctx.textAlign='center';
+  ctx.font='bold 13px DM Mono, monospace'; ctx.fillStyle=s2Col; ctx.textAlign='center';
   ctx.fillText('SpO₂',26,gY); ctx.font='bold 14px DM Mono, monospace';
   ctx.fillText(`${spo2Val}%`,26,gY+15); ctx.font='8px DM Mono, monospace';
   ctx.fillStyle='rgba(150,180,200,0.5)'; ctx.fillText('sat',26,gY+27);
@@ -895,7 +895,7 @@ function drawBrain() {
 
   ctx.save();
   const icCol = ef>0.5?'#ff3b5c':ef>0.15?'#ff8c42':'#4dffb4';
-  ctx.font='bold 10px DM Mono, monospace'; ctx.fillStyle=icCol; ctx.textAlign='center';
+  ctx.font='bold 13px DM Mono, monospace'; ctx.fillStyle=icCol; ctx.textAlign='center';
   ctx.fillText('ICP',W-26,gY); ctx.font='bold 14px DM Mono, monospace';
   ctx.fillText(`${icpVal}`,W-26,gY+15); ctx.font='8px DM Mono, monospace';
   ctx.fillStyle='rgba(150,180,200,0.5)'; ctx.fillText('mmHg',W-26,gY+27);
