@@ -1131,7 +1131,7 @@ input[type=range]::-webkit-slider-thumb {
   </a>
   <div class="ncme-badge">
     <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#4e6a88" stroke-width="1.2"/><text x="5" y="7.5" font-size="12" text-anchor="middle" fill="#4e6a88" font-family="sans-serif">i</text></svg>
-    NCME Questions — Coming Soon
+    NBME Questions — Coming Soon
   </div>
 </header>
 
@@ -2489,73 +2489,59 @@ document.getElementById('altSlider').addEventListener('input', e => { altitude =
 updatePhysUI();
 startPhysAnim();
 
-// ── Canvas sharp-rendering: correct HiDPI + resize handling ─────────────────
+// ── Sharp canvas rendering (HiDPI / retina / Windows scaling) ───────────────
 //
-// Root cause of blurriness: CSS transform: scale() on .app shrinks the whole
-// layout visually but does NOT change getBoundingClientRect() sizes — those
-// still return the full pre-transform design-pixel values. So we must size
-// canvas buffers relative to their fixed CSS design dimensions, not their
-// on-screen rendered size.
+// The app is fixed at 1200×720 CSS px and CSS-transformed to fit the screen.
+// CSS transforms do NOT affect offsetWidth/offsetHeight — those always return
+// the design-space pixel dimensions. So:
 //
-// Correct approach:
-//   1. Each canvas has fixed CSS width/height (set via the absolute-fill CSS).
-//      getBoundingClientRect() returns the true design-pixel CSS size.
-//   2. Buffer size = CSS size × devicePixelRatio — gives full physical pixels.
-//   3. Before each draw, scale the context by DPR so all draw code continues
-//      using CSS-pixel coordinates (no draw functions need changing).
-//   4. ResizeObserver re-syncs when the layout changes (panel show/hide, etc.)
+//   canvas.offsetParent layout → gives true CSS design-px dimensions
+//   canvas buffer = CSS dims × devicePixelRatio → physical pixels, no blur
+//   ctx.setTransform(dpr,0,0,dpr,0,0) → draw code uses CSS-px coordinates
 //
-// Key: setTransform is called ONCE per frame at the START of each draw, NOT
-// inside getContext (which doesn't reset the context and would corrupt state).
+// getScaledCtx() is called at the TOP of every draw function. It:
+//   1. Reads the canvas's actual rendered CSS size via offsetWidth/offsetHeight
+//      of the parent container (since canvas CSS is width:100%;height:100%)
+//   2. Resizes the buffer to CSS-size × DPR if needed
+//   3. Applies DPR scale transform to context
+//   4. Returns { ctx, W, H } in logical CSS-pixel coordinates
 
-(function () {
-  const CANVASES = ['physMain', 'acidCanvas', 'brainCanvas', 'hapeMain'];
-  const dpr = window.devicePixelRatio || 1;
-
-  function syncCanvas(canvas) {
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const cssW = Math.round(rect.width);
-    const cssH = Math.round(rect.height);
-    if (cssW <= 0 || cssH <= 0) return;
-    const bufW = cssW * dpr;
-    const bufH = cssH * dpr;
-    if (canvas.width !== bufW || canvas.height !== bufH) {
-      canvas.width  = bufW;
-      canvas.height = bufH;
-    }
-    // Store the CSS (logical) size so draw functions can read it
-    canvas._cssW = cssW;
-    canvas._cssH = cssH;
-  }
-
-  function syncAll() {
-    CANVASES.forEach(id => syncCanvas(document.getElementById(id)));
-  }
-  window._syncAllCanvases = syncAll;
-
-  const ro = new ResizeObserver(syncAll);
-  document.querySelectorAll('.canvas-pane, .amshace-canvas-area, .hape-canvas-wrap')
-    .forEach(el => ro.observe(el));
-  const ca = document.querySelector('.content-area');
-  if (ca) ro.observe(ca);
-
-  // Initial sync after first paint
-  requestAnimationFrame(syncAll);
-})();
-
-// Returns a 2D context pre-scaled for DPR — call this instead of getContext('2d')
-// directly in draw functions. W and H are the CSS-pixel (logical) dimensions.
 function getScaledCtx(canvas) {
-  const dpr = window.devicePixelRatio || 1;
+  if (!canvas) return null;
+  const dpr  = window.devicePixelRatio || 1;
+
+  // Use parent's offsetWidth/Height — these give the CSS design-space size
+  // regardless of any CSS transform applied to the outer .app container.
+  const parent = canvas.parentElement;
+  const cssW   = parent ? parent.offsetWidth  : canvas.offsetWidth;
+  const cssH   = parent ? parent.offsetHeight : canvas.offsetHeight;
+
+  if (cssW <= 0 || cssH <= 0) {
+    // Panel not visible yet — use existing buffer, don't resize
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, W: Math.round(canvas.width / dpr), H: Math.round(canvas.height / dpr) };
+  }
+
+  const bufW = Math.round(cssW * dpr);
+  const bufH = Math.round(cssH * dpr);
+
+  // Only resize if dimensions actually changed (resizing clears the buffer)
+  if (canvas.width !== bufW || canvas.height !== bufH) {
+    canvas.width  = bufW;
+    canvas.height = bufH;
+  }
+
   const ctx = canvas.getContext('2d');
-  // Reset any previous transform then apply DPR scale
+  // Reset to identity then apply DPR scale — draw code uses logical CSS coords
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  // Return logical CSS dimensions alongside context
-  const W = canvas._cssW || Math.round(canvas.width  / dpr);
-  const H = canvas._cssH || Math.round(canvas.height / dpr);
-  return { ctx, W, H };
+  return { ctx, W: cssW, H: cssH };
 }
+
+// Expose for viewport rescale callback
+window._syncAllCanvases = function() {
+  // Nothing needed — getScaledCtx measures inline on every draw frame
+};
 
 // ═══════════════════════════════════════════════════════════════════
 //  AMS/HACE MODULE
