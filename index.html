@@ -2332,8 +2332,7 @@ function drawEndocrine(ctx, p, W, H, alt) {
 function drawTrend() {
   const tc = document.getElementById('physTrend');
   if (!tc || !tc.getContext) return;
-  const ctx2 = tc.getContext('2d');
-  const TW = tc.width, TH = tc.height;
+  const { ctx: ctx2, W: TW, H: TH } = getScaledCtx(tc);
   const sys = systems[currentSystem];
   if (!sys) return;
   ctx2.clearRect(0, 0, TW, TH);
@@ -2403,11 +2402,16 @@ function startPhysAnim() {
     const p = altPhysics(altitude);
     const sys = systems[currentSystem];
     const mc = document.getElementById('physMain');
-    if (mc && sys && sys.draw) sys.draw(mc.getContext('2d'), p, mc.width, mc.height, altitude);
-    // Always animate acid canvas when pulmonary/renal is active
+    if (mc && sys && sys.draw) {
+      const { ctx, W, H } = getScaledCtx(mc);
+      sys.draw(ctx, p, W, H, altitude);
+    }
     if (currentSystem === 'pulm') {
       const ac = document.getElementById('acidCanvas');
-      if (ac) drawRenal(ac.getContext('2d'), p, ac.width, ac.height, altitude);
+      if (ac) {
+        const { ctx, W, H } = getScaledCtx(ac);
+        drawRenal(ctx, p, W, H, altitude);
+      }
     }
     if (physAnimRunning) requestAnimationFrame(loop);
   }
@@ -2485,38 +2489,73 @@ document.getElementById('altSlider').addEventListener('input', e => { altitude =
 updatePhysUI();
 startPhysAnim();
 
-// ── Canvas auto-resize: keeps pixel buffer = CSS display size ──────
-// This prevents clipping when the container is wider/taller than
-// the canvas's hard-coded width/height attributes.
-(function() {
+// ── Canvas sharp-rendering: correct HiDPI + resize handling ─────────────────
+//
+// Root cause of blurriness: CSS transform: scale() on .app shrinks the whole
+// layout visually but does NOT change getBoundingClientRect() sizes — those
+// still return the full pre-transform design-pixel values. So we must size
+// canvas buffers relative to their fixed CSS design dimensions, not their
+// on-screen rendered size.
+//
+// Correct approach:
+//   1. Each canvas has fixed CSS width/height (set via the absolute-fill CSS).
+//      getBoundingClientRect() returns the true design-pixel CSS size.
+//   2. Buffer size = CSS size × devicePixelRatio — gives full physical pixels.
+//   3. Before each draw, scale the context by DPR so all draw code continues
+//      using CSS-pixel coordinates (no draw functions need changing).
+//   4. ResizeObserver re-syncs when the layout changes (panel show/hide, etc.)
+//
+// Key: setTransform is called ONCE per frame at the START of each draw, NOT
+// inside getContext (which doesn't reset the context and would corrupt state).
+
+(function () {
+  const CANVASES = ['physMain', 'acidCanvas', 'brainCanvas', 'hapeMain'];
+  const dpr = window.devicePixelRatio || 1;
+
   function syncCanvas(canvas) {
-    if (!canvas) return false;
+    if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const w = Math.round(rect.width);
-    const h = Math.round(rect.height);
-    if (w > 0 && h > 0 && (canvas.width !== w || canvas.height !== h)) {
-      canvas.width  = w;
-      canvas.height = h;
-      return true; // dimensions changed
+    const cssW = Math.round(rect.width);
+    const cssH = Math.round(rect.height);
+    if (cssW <= 0 || cssH <= 0) return;
+    const bufW = cssW * dpr;
+    const bufH = cssH * dpr;
+    if (canvas.width !== bufW || canvas.height !== bufH) {
+      canvas.width  = bufW;
+      canvas.height = bufH;
     }
-    return false;
+    // Store the CSS (logical) size so draw functions can read it
+    canvas._cssW = cssW;
+    canvas._cssH = cssH;
   }
 
-  const ro = new ResizeObserver(() => {
-    syncCanvas(document.getElementById('physMain'));
-    syncCanvas(document.getElementById('acidCanvas'));
-    // Also sync other module canvases
-    ['brainCanvas','hapeMainCanvas','hapeCascadeCanvas'].forEach(id => {
-      syncCanvas(document.getElementById(id));
-    });
-  });
+  function syncAll() {
+    CANVASES.forEach(id => syncCanvas(document.getElementById(id)));
+  }
+  window._syncAllCanvases = syncAll;
 
-  // Observe the canvas pane containers
-  document.querySelectorAll('.canvas-pane').forEach(el => ro.observe(el));
-  // Also observe the full content area for initial sizing
+  const ro = new ResizeObserver(syncAll);
+  document.querySelectorAll('.canvas-pane, .amshace-canvas-area, .hape-canvas-wrap')
+    .forEach(el => ro.observe(el));
   const ca = document.querySelector('.content-area');
   if (ca) ro.observe(ca);
+
+  // Initial sync after first paint
+  requestAnimationFrame(syncAll);
 })();
+
+// Returns a 2D context pre-scaled for DPR — call this instead of getContext('2d')
+// directly in draw functions. W and H are the CSS-pixel (logical) dimensions.
+function getScaledCtx(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const ctx = canvas.getContext('2d');
+  // Reset any previous transform then apply DPR scale
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Return logical CSS dimensions alongside context
+  const W = canvas._cssW || Math.round(canvas.width  / dpr);
+  const H = canvas._cssH || Math.round(canvas.height / dpr);
+  return { ctx, W, H };
+}
 
 // ═══════════════════════════════════════════════════════════════════
 //  AMS/HACE MODULE
@@ -2626,8 +2665,7 @@ function renderBrainInfo(data) {
 function drawBrain2() {
   const canvas = document.getElementById('brainCanvas');
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+  const { ctx, W, H } = getScaledCtx(canvas);
   brainFrame++;
 
   const speed = 0.04;
@@ -2856,8 +2894,7 @@ function renderHapeInfo(s) {
 function drawHapeMain() {
   const canvas = document.getElementById('hapeMain');
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+  const { ctx, W, H } = getScaledCtx(canvas);
   const { edema, pap, flood } = hapeState;
   ctx.fillStyle = '#06090f'; ctx.fillRect(0, 0, W, H);
 
@@ -2940,8 +2977,7 @@ function drawHapeMain() {
 function drawHapeCascade() {
   const canvas = document.getElementById('hapeCascade');
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+  const { ctx, W, H } = getScaledCtx(canvas);
   ctx.fillStyle = '#0d1520'; ctx.fillRect(0,0,W,H);
   const { edema, pap, flood } = hapeState;
 
@@ -3094,7 +3130,7 @@ setQuizCat('all');
     app.style.marginTop  = offsetY + 'px';
   }
   rescale();
-  window.addEventListener('resize', rescale);
+  window.addEventListener('resize', () => { rescale(); if (window._syncAllCanvases) window._syncAllCanvases(); });
 })();
 
 
