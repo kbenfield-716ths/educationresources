@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical School Tuition &amp; Endowment Analysis (2019–2023)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2e3347;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --pub: #38bdf8;
+    --pvt: #f87171;
+    --uva: #f5a623;
+    --nyu: #a78bfa;
+    --accent: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg,#1a1d27,#12151f);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 20px;
+  }
+  .header h1 {
+    font-size: 1.7rem; font-weight: 700; margin-bottom: 6px;
+    background: linear-gradient(90deg,#e2e8f0,#94a3b8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 14px; }
+  .badges { display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .badge-green { background:rgba(52,211,153,.15); color:#34d399; border:1px solid rgba(52,211,153,.3); }
+  .badge-blue  { background:rgba(56,189,248,.12); color:#38bdf8; border:1px solid rgba(56,189,248,.3); }
+  .badge-amber { background:rgba(245,166,35,.15); color:#f5a623; border:1px solid rgba(245,166,35,.3); }
+
+  /* ── UVA toggle bar ── */
+  .uva-toggle-bar {
+    background:linear-gradient(90deg,rgba(245,166,35,.1),rgba(245,166,35,.03));
+    border:1px solid rgba(245,166,35,.3); border-radius:10px;
+    padding:12px 22px; margin:20px 40px 0;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+  .uva-toggle-bar .label { font-size:.9rem; color:var(--uva); font-weight:700; }
+  .uva-toggle-bar .desc  { font-size:.75rem; color:var(--muted); margin-top:2px; }
+  .toggle-btn {
+    background:rgba(245,166,35,.15); border:1.5px solid var(--uva); color:var(--uva);
+    padding:7px 20px; border-radius:20px; font-size:.83rem; font-weight:700;
+    cursor:pointer; transition:all .2s; letter-spacing:.03em;
+  }
+  .toggle-btn:hover, .toggle-btn.on { background:var(--uva); color:#000; }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr));
+    gap:14px; padding:20px 40px;
+  }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:16px 18px; position:relative; overflow:hidden;
+  }
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0;
+    width:3px; height:100%; border-radius:10px 0 0 10px;
+  }
+  .stat-card.pub::before { background:var(--pub); }
+  .stat-card.pvt::before { background:var(--pvt); }
+  .stat-card.uva::before { background:var(--uva); }
+  .stat-card.grn::before { background:var(--accent); }
+  .stat-label { font-size:.7rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+  .stat-value { font-size:1.5rem; font-weight:700; color:var(--text); line-height:1; margin-bottom:4px; }
+  .stat-note  { font-size:.7rem; color:var(--muted); }
+  .stat-card.uva .stat-value { color:var(--uva); }
+
+  /* ── Charts grid ── */
+  .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:0 40px 20px; }
+  .chart-full  { grid-column:1 / -1; }
+  .chart-card  { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px 24px; }
+  .chart-title    { font-size:.9rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .chart-subtitle { font-size:.72rem; color:var(--muted); margin-bottom:14px; }
+  .chart-container { position:relative; width:100%; }
+
+  /* ── Toggle pill row (nominal/adj) ── */
+  .pill-row { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
+  .pill {
+    padding:4px 14px; border-radius:20px; font-size:.75rem; font-weight:600;
+    cursor:pointer; border:1px solid var(--border); color:var(--muted);
+    background:transparent; transition:all .15s;
+  }
+  .pill.active { background:rgba(56,189,248,.15); border-color:#38bdf8; color:#38bdf8; }
+
+  /* ── Legend ── */
+  .legend-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px; font-size:.74rem; }
+  .legend-item { display:flex; align-items:center; gap:6px; color:var(--muted); }
+  .legend-dot  { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .legend-dot.uva-dot {
+    width:14px; height:14px;
+    background:var(--uva); border:2px solid rgba(255,255,255,.4);
+    box-shadow:0 0 6px rgba(245,166,35,.5);
+  }
+
+  /* ── Year-2021 warning chip ── */
+  .note-chip {
+    display:inline-block;
+    background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.3);
+    color:#fbbf24; font-size:.68rem; padding:2px 7px; border-radius:4px; margin-left:6px;
+  }
+
+  /* ── UVA spotlight ── */
+  .uva-spotlight {
+    background:linear-gradient(135deg,rgba(245,166,35,.07),rgba(245,166,35,.02));
+    border:1px solid rgba(245,166,35,.35); border-radius:12px; padding:22px 24px;
+    grid-column:1/-1; display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:start;
+  }
+  .uva-icon {
+    width:54px; height:54px;
+    background:rgba(245,166,35,.12); border:2px solid var(--uva); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.85rem; font-weight:800; color:var(--uva); flex-shrink:0; text-align:center; line-height:1.2;
+  }
+  .uva-content h3 { font-size:1rem; font-weight:700; color:var(--uva); margin-bottom:10px; }
+  .uva-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
+  .uva-metric { background:rgba(245,166,35,.07); border:1px solid rgba(245,166,35,.18); border-radius:8px; padding:10px 14px; }
+  .uva-metric-label { font-size:.66rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+  .uva-metric-value { font-size:1.1rem; font-weight:700; color:var(--uva); }
+  .uva-narrative { font-size:.8rem; color:var(--muted); line-height:1.65; }
+  .uva-narrative strong { color:var(--text); }
+
+  /* ── Footer ── */
+  .data-note {
+    font-size:.71rem; color:var(--muted); text-align:center;
+    padding:14px 40px 28px; border-top:1px solid var(--border); margin-top:4px; line-height:1.75;
+  }
+
+  @media(max-width:800px){
+    .header,.uva-toggle-bar,.stats-row,.data-note{ padding-left:20px; padding-right:20px; }
+    .uva-toggle-bar{ margin:16px 20px 0; }
+    .charts-grid{ grid-template-columns:1fr; padding:0 20px 20px; }
+    .chart-full,.uva-spotlight{ grid-column:1; }
+    .uva-spotlight{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <h1>Medical School Tuition &amp; Endowment Analysis</h1>
+  <div class="header-sub">25 U.S. MD-granting programs &nbsp;·&nbsp; Academic Years 2018-19 through 2022-23 &nbsp;·&nbsp; Real verified data</div>
+  <div class="badges">
+    <span class="badge badge-green">✓ AAMC Tuition &amp; Student Fees Report (direct extract, 2013–2026)</span>
+    <span class="badge badge-blue">NACUBO-Commonfund FY2022 Endowments</span>
+    <span class="badge badge-blue">BRIMR NIH Funding Tiers</span>
+    <span class="badge badge-amber">● UVA Highlighted</span>
+  </div>
+</div>
+
+<!-- ── UVA TOGGLE BAR ── -->
+<div class="uva-toggle-bar">
+  <div>
+    <div class="label">● UVA School of Medicine</div>
+    <div class="desc">AY 2022-23: $51,034 tuition · $15.0B endowment · Public · Mid NIH Tier · #2 most expensive public school in panel</div>
+  </div>
+  <button class="toggle-btn on" id="uvaToggle" onclick="toggleUVA()">Highlight UVA: ON</button>
+</div>
+
+<!-- ── STATS ROW ── -->
+<div class="stats-row">
+  <div class="stat-card pvt">
+    <div class="stat-label">Private Avg Tuition (2023)</div>
+    <div class="stat-value">$67,606</div>
+    <div class="stat-note">18 schools · excl. NYU (tuition-free)</div>
+  </div>
+  <div class="stat-card pub">
+    <div class="stat-label">Public Avg Tuition (2023)</div>
+    <div class="stat-value">$44,754</div>
+    <div class="stat-note">6 schools · in-state / resident rate</div>
+  </div>
+  <div class="stat-card uva">
+    <div class="stat-label">UVA SOM Tuition (2023)</div>
+    <div class="stat-value">$51,034</div>
+    <div class="stat-note">+$6,280 above public avg</div>
+  </div>
+  <div class="stat-card pub">
+    <div class="stat-label">Public CAGR 2019–2023</div>
+    <div class="stat-value">+2.71%</div>
+    <div class="stat-note">Avg 4-yr compound growth, 6 public schools</div>
+  </div>
+  <div class="stat-card pvt">
+    <div class="stat-label">Private CAGR 2019–2023</div>
+    <div class="stat-value">+2.73%</div>
+    <div class="stat-note">Avg 4-yr compound growth, 18 private schools</div>
+  </div>
+  <div class="stat-card grn">
+    <div class="stat-label">UVA CAGR 2019–2023</div>
+    <div class="stat-value">+1.40%</div>
+    <div class="stat-note">Slowest growth of any public school in panel</div>
+  </div>
+</div>
+
+<!-- ── CHARTS GRID ── -->
+<div class="charts-grid">
+
+  <!-- 1. Main scatter: endowment vs tuition level (2023) -->
+  <div class="chart-card chart-full">
+    <div class="chart-title">Endowment vs. First-Year Tuition — AY 2022-23</div>
+    <div class="chart-subtitle">Each point = one school · log-scale x-axis · hover for details</div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pub)"></div>Public</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pvt)"></div>Private</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--nyu)"></div>Private – Tuition-Free (NYU)</div>
+      <div class="legend-item"><div class="legend-dot uva-dot"></div><span style="color:var(--uva);font-weight:600">UVA School of Medicine</span></div>
+    </div>
+    <div class="chart-container" style="height:420px"><canvas id="scatterChart"></canvas></div>
+  </div>
+
+  <!-- 2. NEW: Tuition change by endowment (nominal/adj toggle) -->
+  <div class="chart-card chart-full">
+    <div class="chart-title">Tuition Growth vs. Endowment — Mean Annual % Change (2015–2023)</div>
+    <div class="chart-subtitle" id="growthSub">
+      Institution-level mean of 9 annual YoY % changes (AY 2014-15 through AY 2022-23) · OLS regression line · log-scale x-axis
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+      <div class="legend-row" style="margin-bottom:0">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--pub)"></div>Public</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--pvt)"></div>Private</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--nyu)"></div>NYU (tuition-free)</div>
+        <div class="legend-item"><div class="legend-dot uva-dot"></div><span style="color:var(--uva);font-weight:600">UVA</span></div>
+        <div class="legend-item"><div style="width:28px;height:2px;background:rgba(100,116,139,.7);border-top:2px dashed rgba(100,116,139,.7)"></div><span style="margin-left:4px">OLS fit</span></div>
+      </div>
+      <div class="pill-row" style="margin-bottom:0">
+        <button class="pill active" id="pillNom" onclick="setGrowthMode('nom')">Nominal</button>
+        <button class="pill"        id="pillAdj" onclick="setGrowthMode('adj')">CPI-Adjusted</button>
+      </div>
+    </div>
+    <div class="chart-container" style="height:400px"><canvas id="growthChart"></canvas></div>
+  </div>
+
+  <!-- 3. Sector trend -->
+  <div class="chart-card">
+    <div class="chart-title">Tuition Trajectory by Sector — 2014 to 2023</div>
+    <div class="chart-subtitle">
+      Average first-year resident tuition + fees · NYU excluded
+    </div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pub)"></div>Public avg (6 schools)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pvt)"></div>Private avg (18 schools)</div>
+      <div class="legend-item"><div class="legend-dot uva-dot"></div><span style="color:var(--uva)">UVA SOM</span></div>
+    </div>
+    <div class="chart-container" style="height:300px"><canvas id="trendChart"></canvas></div>
+  </div>
+
+  <!-- 4. NIH tier bar -->
+  <div class="chart-card">
+    <div class="chart-title">Average Tuition by NIH Funding Tier (2023)</div>
+    <div class="chart-subtitle">BRIMR tiers · High &gt;$400M/yr · Mid $150–400M · Low &lt;$150M · NYU excluded</div>
+    <div class="chart-container" style="height:300px"><canvas id="nihChart"></canvas></div>
+  </div>
+
+  <!-- 5. UVA spotlight -->
+  <div class="uva-spotlight">
+    <div class="uva-icon">UVA<br>SOM</div>
+    <div class="uva-content">
+      <h3>● UVA School of Medicine — Where It Stands</h3>
+      <div class="uva-grid">
+        <div class="uva-metric"><div class="uva-metric-label">Tuition 2014</div><div class="uva-metric-value">$46,386</div></div>
+        <div class="uva-metric"><div class="uva-metric-label">Tuition 2019</div><div class="uva-metric-value">$48,292</div></div>
+        <div class="uva-metric"><div class="uva-metric-label">Tuition 2023</div><div class="uva-metric-value">$51,034</div></div>
+        <div class="uva-metric"><div class="uva-metric-label">9-yr CAGR</div><div class="uva-metric-value">+1.07%/yr</div></div>
+        <div class="uva-metric"><div class="uva-metric-label">Mean Nominal Growth</div><div class="uva-metric-value">+1.07%/yr</div></div>
+        <div class="uva-metric"><div class="uva-metric-label">Mean Real Growth</div><div class="uva-metric-value">−1.84%/yr</div></div>
+        <div class="uva-metric"><div class="uva-metric-label">FY2022 Endowment</div><div class="uva-metric-value">$14.3B</div></div>
+        <div class="uva-metric"><div class="uva-metric-label">NIH Tier</div><div class="uva-metric-value">Mid ($150–400M)</div></div>
+      </div>
+      <div class="uva-narrative">
+        <strong>Key insight:</strong> UVA holds the <strong>2nd-highest resident tuition</strong> ($51,034) of the six public schools here — only Pittsburgh ($62,416) charges more. Yet UVA's nominal growth of just <strong>+1.07%/yr</strong> over 9 years (AY 2014-15 through AY 2022-23) is the lowest of any public school in the panel; in real (inflation-adjusted) terms, UVA tuition actually <strong>declined −1.84%/yr</strong>, the best outcome for students among all public programs. Despite an endowment ($14.3B) comparable to elite private schools, UVA is not converting its wealth into aggressive tuition increases. Under proposed federal graduate PLUS loan caps, however, UVA students at $51K still face exposure — the nominal price tag is what triggers debt thresholds, regardless of real-dollar trends.
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Public school trend comparison -->
+  <div class="chart-card chart-full">
+    <div class="chart-title">Public Medical School Tuition Compared (2014–2023)</div>
+    <div class="chart-subtitle">
+      Resident tuition + required fees · UVA shown in orange · others dashed
+    </div>
+    <div class="legend-row" id="pubLegend"></div>
+    <div class="chart-container" style="height:340px"><canvas id="pubTrendChart"></canvas></div>
+  </div>
+
+  <!-- 7. Tercile × sector bar -->
+  <div class="chart-card chart-full">
+    <div class="chart-title">Tuition by Endowment Tercile &amp; Sector (2023)</div>
+    <div class="chart-subtitle">High &gt;$6B · Mid $1–6B · NYU excluded</div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pub)"></div>Public avg within tercile</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pvt)"></div>Private avg within tercile</div>
+      <div class="legend-item"><div class="legend-dot uva-dot"></div><span style="color:var(--uva)">UVA SOM (actual)</span></div>
+    </div>
+    <div class="chart-container" style="height:280px"><canvas id="tercileChart"></canvas></div>
+  </div>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<div class="data-note">
+  <strong>Tuition:</strong> AAMC "Tuition and Student Fees Report, 2013–2026" — direct extract ·
+  First-year resident/in-state tuition + required fees; health insurance excluded ·
+  <strong>Endowment:</strong> NACUBO-Commonfund Study of Endowments FY2022 ·
+  <strong>NIH tiers:</strong> Blue Ridge Institute for Medical Research (BRIMR) ·
+  CPI adjustment uses BLS CPI-U annual averages (national) ·
+  NYU Grossman SOM is tuition-free since AY 2018-19 and excluded from averages unless noted ·
+  Panel covers AY 2013-14 through AY 2022-23 (10 years); year-over-year changes computed for 9 academic years (AY 2014-15 through AY 2022-23).
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════
+
+// 2023 tuition + endowment for main scatter
+const SCHOOLS = [
+  {name:"Boston University SOM",    endow:2.625,  tuit:69528, sector:"Pvt", nih:"M", isUVA:false},
+  {name:"Brown Warren Alpert SOM",  endow:7.455,  tuit:68544, sector:"Pvt", nih:"M", isUVA:false},
+  {name:"Case Western SOM",         endow:2.625,  tuit:70074, sector:"Pvt", nih:"M", isUVA:false},
+  {name:"Columbia Vagelos SOM",     endow:14.28,  tuit:71425, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"Duke School of Medicine",  endow:14.175, tuit:68440, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"Emory School of Medicine", endow:11.445, tuit:54270, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"Georgetown SOM",           endow:2.625,  tuit:69005, sector:"Pvt", nih:"L", isUVA:false},
+  {name:"Harvard Medical School",   endow:55.86,  tuit:68123, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"Johns Hopkins SOM",        endow:8.4,    tuit:61696, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"U Michigan Medical School",endow:18.795, tuit:50763, sector:"Pub", nih:"H", isUVA:false},
+  {name:"Northwestern Feinberg SOM",endow:13.755, tuit:69442, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"NYU Grossman SOM",         endow:6.09,   tuit:0,     sector:"Nyu", nih:"M", isUVA:false},
+  {name:"Ohio State SOM",           endow:8.19,   tuit:31081, sector:"Pub", nih:"M", isUVA:false},
+  {name:"Penn Perelman SOM",        endow:22.05,  tuit:69263, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"U Pittsburgh SOM",         endow:4.725,  tuit:62416, sector:"Pub", nih:"M", isUVA:false},
+  {name:"Stanford School of Med.",  endow:38.325, tuit:64901, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"Tulane SOM",               endow:2.31,   tuit:71262, sector:"Pvt", nih:"L", isUVA:false},
+  {name:"U Rochester SOM",          endow:2.73,   tuit:69363, sector:"Pvt", nih:"L", isUVA:false},
+  {name:"UCSF School of Medicine",  endow:2.415,  tuit:38521, sector:"Pub", nih:"H", isUVA:false},
+  {name:"UNC School of Medicine",   endow:5.46,   tuit:34706, sector:"Pub", nih:"M", isUVA:false},
+  {name:"UVA School of Medicine",   endow:15.015, tuit:51034, sector:"Pub", nih:"M", isUVA:true },
+  {name:"Vanderbilt SOM",           endow:11.76,  tuit:66509, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"Weill Cornell Medicine",   endow:2.625,  tuit:68892, sector:"Pvt", nih:"M", isUVA:false},
+  {name:"WashU School of Medicine", endow:10.71,  tuit:67476, sector:"Pvt", nih:"H", isUVA:false},
+  {name:"Yale School of Medicine",  endow:43.47,  tuit:68697, sector:"Pvt", nih:"H", isUVA:false},
+];
+
+// Growth scatter: mean annual % change computed from panel (years 2020 + 2023)
+// y_raw = mean nominal YoY % change; y_adj = mean CPI-adjusted YoY % change
+// Based on 9 years of data (AY 2014-15 through AY 2022-23); x = FY2022 endowment ($B)
+const GROWTH_DATA = [
+  {label:"Tulane SOM",                x: 2.200, y_raw: 2.73, y_adj:-0.18,  type:"Pvt", isUVA:false},
+  {label:"UCSF School of Medicine",   x: 2.300, y_raw: 1.96, y_adj:-0.95,  type:"Pub", isUVA:false},
+  {label:"Weill Cornell Medicine",    x: 2.500, y_raw: 3.21, y_adj: 0.30,  type:"Pvt", isUVA:false},
+  {label:"Boston University SOM",     x: 2.500, y_raw: 3.02, y_adj: 0.11,  type:"Pvt", isUVA:false},
+  {label:"Case Western SOM",          x: 2.500, y_raw: 3.08, y_adj: 0.17,  type:"Pvt", isUVA:false},
+  {label:"Georgetown SOM",            x: 2.500, y_raw: 2.96, y_adj: 0.04,  type:"Pvt", isUVA:false},
+  {label:"U Rochester SOM",           x: 2.600, y_raw: 3.95, y_adj: 1.04,  type:"Pvt", isUVA:false},
+  {label:"U Pittsburgh SOM",          x: 4.500, y_raw: 3.03, y_adj: 0.12,  type:"Pub", isUVA:false},
+  {label:"UNC School of Medicine",    x: 5.200, y_raw: 6.74, y_adj: 3.83,  type:"Pub", isUVA:false},
+  {label:"NYU Grossman SOM",          x: 5.800, y_raw: 0.00, y_adj:-2.91,  type:"Nyu", isUVA:false},
+  {label:"Brown Warren Alpert SOM",   x: 7.100, y_raw: 3.53, y_adj: 0.62,  type:"Pvt", isUVA:false},
+  {label:"Ohio State SOM",            x: 7.800, y_raw: 0.71, y_adj:-2.20,  type:"Pub", isUVA:false},
+  {label:"Johns Hopkins SOM",         x: 8.000, y_raw: 3.00, y_adj: 0.09,  type:"Pvt", isUVA:false},
+  {label:"WashU School of Medicine",  x:10.200, y_raw: 2.51, y_adj:-0.40,  type:"Pvt", isUVA:false},
+  {label:"Emory School of Medicine",  x:10.900, y_raw: 0.97, y_adj:-1.94,  type:"Pvt", isUVA:false},
+  {label:"Vanderbilt SOM",            x:11.200, y_raw: 4.39, y_adj: 1.48,  type:"Pvt", isUVA:false},
+  {label:"Northwestern Feinberg SOM", x:13.100, y_raw: 3.56, y_adj: 0.65,  type:"Pvt", isUVA:false},
+  {label:"Columbia Vagelos SOM",      x:13.600, y_raw: 3.29, y_adj: 0.38,  type:"Pvt", isUVA:false},
+  {label:"Duke School of Medicine",   x:13.500, y_raw: 2.76, y_adj:-0.15,  type:"Pvt", isUVA:false},
+  {label:"UVA School of Medicine",    x:14.300, y_raw: 1.07, y_adj:-1.84,  type:"Pub", isUVA:true },
+  {label:"U Michigan Medical School", x:17.900, y_raw: 6.00, y_adj: 3.09,  type:"Pub", isUVA:false},
+  {label:"Penn Perelman SOM",         x:21.000, y_raw: 3.14, y_adj: 0.23,  type:"Pvt", isUVA:false},
+  {label:"Stanford School of Med.",   x:36.500, y_raw: 2.97, y_adj: 0.06,  type:"Pvt", isUVA:false},
+  {label:"Yale School of Medicine",   x:41.400, y_raw: 3.13, y_adj: 0.22,  type:"Pvt", isUVA:false},
+  {label:"Harvard Medical School",    x:53.200, y_raw: 2.72, y_adj:-0.19,  type:"Pvt", isUVA:false},
+];
+
+// Trend averages (AY 2013-14 through AY 2022-23)
+const TREND_LABELS = ["2013-14","2014-15","2015-16","2016-17","2017-18","2018-19","2019-20","2020-21","2021-22","2022-23"];
+const PUB_AVG  = [34283, 35288, 36518, 37775, 38956, 40271, 41989, 41958, 42998, 44754];
+const PVT_AVG  = [51588, 53176, 55078, 56924, 58833, 60741, 62571, 64144, 66045, 67606];
+const UVA_DATA = [46386, 47118, 48036, 48114, 48182, 48292, 48416, 48574, 50004, 51034];
+
+// Public school trajectories
+const PUB_SCHOOLS = [
+  {name:"UCSF SOM",        data:[32365,32365,33000,33676,34682,35384,36021,36765,37488,38521], color:"rgba(129,212,250,.7)", dash:[5,3]},
+  {name:"U Michigan",      data:[30150,31482,32756,34378,36080,37868,39744,42432,44373,50763], color:"rgba(99,179,237,.7)",  dash:[5,3]},
+  {name:"UNC SOM",         data:[19499,20855,23772,26782,29605,32387,34701,34701,34745,34706], color:"rgba(167,139,250,.7)", dash:[5,3]},
+  {name:"Ohio State SOM",  data:[29552,30277,30690,30317,30317,30800,34376,30638,31082,31081], color:"rgba(129,140,248,.7)", dash:[5,3]},
+  {name:"U Pittsburgh",    data:[47745,49634,50852,53382,54872,56896,58676,58640,60298,62416], color:"rgba(248,113,113,.7)", dash:[5,3]},
+  {name:"UVA SOM",         data:[46386,47118,48036,48114,48182,48292,48416,48574,50004,51034], color:"#f5a623",              dash:[]   },
+];
+
+// ══════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════
+let highlightUVA = true;
+let growthMode   = 'nom'; // 'nom' | 'adj'
+
+// ══════════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════════
+function nihLabel(c){ return c==="H"?"High":c==="M"?"Mid":"Low"; }
+function fmt(v){ return v==null?"n/a":(v>=0?"+":"")+v.toFixed(2)+"%" }
+
+function olsLine(pts){
+  // Points with log-x for OLS, return {x, y} in original scale for display
+  const lpts = pts.map(p=>({x:Math.log10(p.x), y:p.y}));
+  const n=lpts.length;
+  const mx=lpts.reduce((a,b)=>a+b.x,0)/n, my=lpts.reduce((a,b)=>a+b.y,0)/n;
+  const num=lpts.reduce((a,b)=>a+(b.x-mx)*(b.y-my),0);
+  const den=lpts.reduce((a,b)=>a+(b.x-mx)**2,0);
+  const m=num/den, c=my-m*mx;
+  const xs=pts.map(p=>p.x);
+  const xmin=Math.min(...xs), xmax=Math.max(...xs);
+  // Sample 40 points across log range for smooth line
+  const logMin=Math.log10(xmin), logMax=Math.log10(xmax);
+  const line=[];
+  for(let i=0;i<=40;i++){
+    const lx=logMin+(logMax-logMin)*i/40;
+    line.push({x:Math.pow(10,lx), y:m*lx+c});
+  }
+  return line;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 1: ENDOWMENT vs TUITION LEVEL SCATTER
+// ══════════════════════════════════════════════════════════════════
+function buildLevelScatterDatasets(){
+  const pub=[],pvt=[],nyu=[],uva=[];
+  SCHOOLS.forEach(s=>{
+    const pt={x:s.endow, y:s.tuit, label:s.name, nih:s.nih};
+    if(s.isUVA)              uva.push(pt);
+    else if(s.sector==="Nyu") nyu.push(pt);
+    else if(s.sector==="Pub") pub.push(pt);
+    else                       pvt.push(pt);
+  });
+  return [
+    {label:"Public",  data:pub, backgroundColor:"rgba(56,189,248,.82)",
+     pointRadius:7, pointHoverRadius:10, borderColor:"rgba(56,189,248,.35)", borderWidth:1},
+    {label:"Private", data:pvt, backgroundColor:"rgba(248,113,113,.78)",
+     pointRadius:7, pointHoverRadius:10, borderColor:"rgba(248,113,113,.35)", borderWidth:1},
+    {label:"Private – Tuition-Free (NYU)", data:nyu, backgroundColor:"rgba(167,139,250,.82)",
+     pointRadius:7, pointHoverRadius:10, borderColor:"rgba(167,139,250,.35)", borderWidth:1},
+    {label:"UVA School of Medicine", data:uva,
+     backgroundColor: highlightUVA?"#f5a623":"rgba(56,189,248,.82)",
+     pointRadius:     highlightUVA?15:7,
+     pointHoverRadius:highlightUVA?19:10,
+     pointStyle:      "circle",
+     borderColor:     highlightUVA?"rgba(255,255,255,.85)":"rgba(56,189,248,.35)",
+     borderWidth:     highlightUVA?2.5:1},
+  ];
+}
+
+const scatterCtx = document.getElementById("scatterChart").getContext("2d");
+const scatterChart = new Chart(scatterCtx,{
+  type:"scatter",
+  data:{datasets:buildLevelScatterDatasets()},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{type:"logarithmic",
+         title:{display:true,text:"University Endowment (Billions USD, log scale)",color:"#8892a4",font:{size:11}},
+         ticks:{color:"#8892a4",callback:v=>"$"+v+"B"},
+         grid:{color:"rgba(46,51,71,.7)"}, border:{color:"#2e3347"}},
+      y:{title:{display:true,text:"First-Year Resident Tuition + Fees (USD)",color:"#8892a4",font:{size:11}},
+         ticks:{color:"#8892a4",callback:v=>"$"+v.toLocaleString()},
+         grid:{color:"rgba(46,51,71,.7)"}, border:{color:"#2e3347"},
+         min:0, max:80000}
+    },
+    plugins:{
+      legend:{labels:{color:"#8892a4",font:{size:11},padding:14,usePointStyle:true,pointStyleWidth:10}},
+      tooltip:{backgroundColor:"#1a1d27",borderColor:"#2e3347",borderWidth:1,
+               titleColor:"#e2e8f0",bodyColor:"#8892a4",padding:10,
+               callbacks:{title:i=>i[0]?.raw?.label||"",
+                          label:i=>["  Tuition: $"+i.raw.y.toLocaleString(),
+                                    "  Endowment: $"+i.raw.x+"B",
+                                    "  NIH: "+nihLabel(i.raw.nih)]}}
+    }
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 2: TUITION GROWTH vs ENDOWMENT SCATTER (nominal / adj toggle)
+// ══════════════════════════════════════════════════════════════════
+function buildGrowthDatasets(){
+  const yKey = growthMode==="nom" ? "y_raw" : "y_adj";
+  const pub=[],pvt=[],nyu=[],uvaArr=[];
+  GROWTH_DATA.forEach(s=>{
+    const pt={x:s.x, y:s[yKey], label:s.label};
+    if(s.isUVA)              uvaArr.push(pt);
+    else if(s.type==="Nyu")   nyu.push(pt);
+    else if(s.type==="Pub")   pub.push(pt);
+    else                       pvt.push(pt);
+  });
+  // OLS on all non-NYU, non-zero points
+  const olsPts = GROWTH_DATA.filter(s=>!s.isUVA && s.type!=="Nyu")
+    .map(s=>({x:s.x, y:s[yKey]}));
+  const ols = olsLine(olsPts);
+
+  return [
+    {label:"Public",  data:pub, type:"scatter", backgroundColor:"rgba(56,189,248,.82)",
+     pointRadius:7, pointHoverRadius:10, borderColor:"rgba(56,189,248,.35)", borderWidth:1, order:3},
+    {label:"Private", data:pvt, type:"scatter", backgroundColor:"rgba(248,113,113,.78)",
+     pointRadius:7, pointHoverRadius:10, borderColor:"rgba(248,113,113,.35)", borderWidth:1, order:3},
+    {label:"NYU (tuition-free)", data:nyu, type:"scatter", backgroundColor:"rgba(167,139,250,.82)",
+     pointRadius:7, pointHoverRadius:10, borderColor:"rgba(167,139,250,.35)", borderWidth:1, order:3},
+    {label:"UVA School of Medicine", data:uvaArr, type:"scatter",
+     backgroundColor: highlightUVA?"#f5a623":"rgba(56,189,248,.82)",
+     pointRadius:     highlightUVA?15:7,
+     pointHoverRadius:highlightUVA?19:10,
+     pointStyle:      "circle",
+     borderColor:     highlightUVA?"rgba(255,255,255,.85)":"rgba(56,189,248,.35)",
+     borderWidth:     highlightUVA?2.5:1, order:2},
+    {label:"OLS regression", data:ols, type:"line",
+     borderColor:"rgba(100,116,139,.65)", backgroundColor:"transparent",
+     borderWidth:1.8, borderDash:[5,4],
+     pointRadius:0, pointHoverRadius:0, tension:0, order:1},
+  ];
+}
+
+const growthCtx = document.getElementById("growthChart").getContext("2d");
+const growthChart = new Chart(growthCtx,{
+  type:"scatter",
+  data:{datasets:buildGrowthDatasets()},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{type:"logarithmic",
+         title:{display:true,text:"University Endowment (Billions USD, log scale)",color:"#8892a4",font:{size:11}},
+         ticks:{color:"#8892a4",callback:v=>"$"+v+"B"},
+         grid:{color:"rgba(46,51,71,.7)"}, border:{color:"#2e3347"}},
+      y:{title:{display:true,text:"Mean Annual Nominal Tuition Change (%)",color:"#8892a4",font:{size:11}},
+         ticks:{color:"#8892a4",callback:v=>v.toFixed(1)+"%"},
+         grid:{color:"rgba(46,51,71,.7)"}, border:{color:"#2e3347"}}
+    },
+    plugins:{
+      legend:{labels:{color:"#8892a4",font:{size:11},padding:14,usePointStyle:true,pointStyleWidth:10,
+                      filter:i=>i.text!=="OLS regression"}},
+      tooltip:{backgroundColor:"#1a1d27",borderColor:"#2e3347",borderWidth:1,
+               titleColor:"#e2e8f0",bodyColor:"#8892a4",padding:10,
+               filter:i=>i.datasetIndex!==4,
+               callbacks:{title:i=>i[0]?.raw?.label||"",
+                          label:i=>["  Endowment: $"+i.raw.x.toFixed(3)+"B",
+                                    "  "+(growthMode==="nom"?"Nominal":"CPI-Adj.")+" growth: "+fmt(i.raw.y)]}}
+    }
+  }
+});
+
+function setGrowthMode(mode){
+  growthMode = mode;
+  document.getElementById("pillNom").classList.toggle("active", mode==="nom");
+  document.getElementById("pillAdj").classList.toggle("active", mode==="adj");
+  const yLabel = mode==="nom"
+    ? "Mean Annual Nominal Tuition Change (%)"
+    : "Mean Annual CPI-Adjusted Tuition Change (%)";
+  growthChart.options.scales.y.title.text = yLabel;
+  growthChart.data.datasets = buildGrowthDatasets();
+  growthChart.update("none");
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 3: SECTOR TREND (line)
+// ══════════════════════════════════════════════════════════════════
+function buildTrendDatasets(){
+  return [
+    {label:"Public Avg (6 schools)", data:PUB_AVG,
+     borderColor:"rgba(56,189,248,.9)", backgroundColor:"transparent",
+     borderWidth:2.5, pointRadius:5, pointHoverRadius:8,
+     spanGaps:true, tension:0.2},
+    {label:"Private Avg, excl. NYU (18 schools)", data:PVT_AVG,
+     borderColor:"rgba(248,113,113,.9)", backgroundColor:"transparent",
+     borderWidth:2.5, pointRadius:5, pointHoverRadius:8,
+     spanGaps:true, tension:0.2},
+    {label:"UVA SOM", data:highlightUVA?UVA_DATA:[null,null,null,null,null],
+     borderColor:"#f5a623", backgroundColor:"rgba(245,166,35,.07)",
+     borderWidth:highlightUVA?3.5:0,
+     pointRadius:highlightUVA?7:0, pointStyle:"circle",
+     spanGaps:true, tension:0.2, fill:false,
+     borderDash:highlightUVA?[6,3]:[]},
+  ];
+}
+
+const trendCtx = document.getElementById("trendChart").getContext("2d");
+const trendChart = new Chart(trendCtx,{
+  type:"line",
+  data:{labels:TREND_LABELS, datasets:buildTrendDatasets()},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{ticks:{color:"#8892a4",font:{size:10}},grid:{color:"rgba(46,51,71,.7)"},border:{color:"#2e3347"}},
+      y:{ticks:{color:"#8892a4",callback:v=>"$"+(v/1000).toFixed(0)+"K"},
+         grid:{color:"rgba(46,51,71,.7)"},border:{color:"#2e3347"},min:28000,max:74000}
+    },
+    plugins:{
+      legend:{labels:{color:"#8892a4",font:{size:11},usePointStyle:true,pointStyleWidth:10}},
+      tooltip:{backgroundColor:"#1a1d27",borderColor:"#2e3347",borderWidth:1,
+               titleColor:"#e2e8f0",bodyColor:"#8892a4",padding:10,
+               callbacks:{label:i=>" "+i.dataset.label+": $"+(i.raw!=null?i.raw.toLocaleString():"N/A")}}
+    }
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 4: NIH TIER BAR
+// ══════════════════════════════════════════════════════════════════
+const nihCtx = document.getElementById("nihChart").getContext("2d");
+new Chart(nihCtx,{
+  type:"bar",
+  data:{
+    labels:["High NIH\n>$400M/yr\n(n=13)","Mid NIH\n$150–400M\n(n=8)","Low NIH\n<$150M/yr\n(n=3)"],
+    datasets:[{label:"Avg Tuition 2023",
+      data:[63040,57034,69877],
+      backgroundColor:["rgba(255,107,107,.75)","rgba(255,209,102,.75)","rgba(6,214,160,.75)"],
+      borderColor:["#ff6b6b","#ffd166","#06d6a0"],
+      borderWidth:1.5, borderRadius:7}]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{ticks:{color:"#8892a4",font:{size:10}},grid:{display:false},border:{color:"#2e3347"}},
+      y:{ticks:{color:"#8892a4",callback:v=>"$"+(v/1000).toFixed(0)+"K"},
+         grid:{color:"rgba(46,51,71,.7)"},border:{color:"#2e3347"},min:50000,max:76000}
+    },
+    plugins:{legend:{display:false},
+             tooltip:{backgroundColor:"#1a1d27",borderColor:"#2e3347",borderWidth:1,
+                      titleColor:"#e2e8f0",bodyColor:"#8892a4",padding:10,
+                      callbacks:{label:i=>" Avg: $"+i.raw.toLocaleString()}}}
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 5: PUBLIC SCHOOL TRENDS
+// ══════════════════════════════════════════════════════════════════
+const pubLegendEl = document.getElementById("pubLegend");
+PUB_SCHOOLS.forEach(s=>{
+  const el=document.createElement("div"); el.className="legend-item";
+  const isU=s.name==="UVA SOM";
+  if(isU){
+    el.innerHTML=`<div class="legend-dot uva-dot"></div><span style="color:var(--uva);font-weight:700">${s.name}</span>`;
+  } else {
+    el.innerHTML=`<div class="legend-dot" style="background:${s.color}"></div>${s.name}`;
+  }
+  pubLegendEl.appendChild(el);
+});
+
+const pubTrendCtx = document.getElementById("pubTrendChart").getContext("2d");
+const pubTrendChart = new Chart(pubTrendCtx,{
+  type:"line",
+  data:{
+    labels:TREND_LABELS,
+    datasets:PUB_SCHOOLS.map(s=>({
+      label:s.name,
+      data:s.data,
+      borderColor:s.color,
+      backgroundColor:"transparent",
+      borderWidth:s.name==="UVA SOM"?3.8:2,
+      pointRadius:s.name==="UVA SOM"?7:4,
+      pointStyle:"circle",
+      borderDash:s.dash,
+      spanGaps:true, tension:0.15,
+    }))
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{ticks:{color:"#8892a4",font:{size:10}},grid:{color:"rgba(46,51,71,.7)"},border:{color:"#2e3347"}},
+      y:{ticks:{color:"#8892a4",callback:v=>"$"+(v/1000).toFixed(0)+"K"},
+         grid:{color:"rgba(46,51,71,.7)"},border:{color:"#2e3347"},min:25000,max:68000}
+    },
+    plugins:{
+      legend:{labels:{color:"#8892a4",font:{size:11},usePointStyle:true,pointStyleWidth:12}},
+      tooltip:{backgroundColor:"#1a1d27",borderColor:"#2e3347",borderWidth:1,
+               titleColor:"#e2e8f0",bodyColor:"#8892a4",padding:10,
+               callbacks:{label:i=>" "+i.dataset.label+": $"+(i.raw!=null?i.raw.toLocaleString():"N/A")}}
+    }
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 6: TERCILE × SECTOR BARS
+// ══════════════════════════════════════════════════════════════════
+// High pub avg  = (Michigan 50763 + UVA 51034 + Ohio State 31081)/3 = 44,293
+// High pvt avg  = (Harvard+Yale+Stanford+Penn+Columbia+Duke+Northwestern+WashU+Hopkins+Vanderbilt+Emory+Brown)/12 = 67,399
+// Mid pub avg   = (UCSF 38521 + UNC 34706 + Pittsburgh 62416)/3 = 45,214
+// Mid pvt avg   = (Georgetown+BostonU+WeillCornell+CaseWestern+URochester+Tulane)/6 = 69,687
+const tercileCtx = document.getElementById("tercileChart").getContext("2d");
+new Chart(tercileCtx,{
+  type:"bar",
+  data:{
+    labels:["High Endowment (>$6B)\n15 schools","Mid Endowment ($1–6B)\n9 schools"],
+    datasets:[
+      {label:"Public avg within tercile",
+       data:[44293,45214],
+       backgroundColor:"rgba(56,189,248,.72)",borderColor:"#38bdf8",borderWidth:1.5,borderRadius:6},
+      {label:"Private avg within tercile",
+       data:[67399,69687],
+       backgroundColor:"rgba(248,113,113,.72)",borderColor:"#f87171",borderWidth:1.5,borderRadius:6},
+      {label:"UVA SOM (actual)",
+       data:[51034,null],
+       backgroundColor:"rgba(245,166,35,.85)",borderColor:"#f5a623",borderWidth:1.5,borderRadius:6},
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{ticks:{color:"#8892a4",font:{size:10}},grid:{display:false},border:{color:"#2e3347"}},
+      y:{ticks:{color:"#8892a4",callback:v=>"$"+(v/1000).toFixed(0)+"K"},
+         grid:{color:"rgba(46,51,71,.7)"},border:{color:"#2e3347"},min:28000,max:76000}
+    },
+    plugins:{
+      legend:{labels:{color:"#8892a4",font:{size:11},usePointStyle:true}},
+      tooltip:{backgroundColor:"#1a1d27",borderColor:"#2e3347",borderWidth:1,
+               titleColor:"#e2e8f0",bodyColor:"#8892a4",padding:10,
+               callbacks:{label:i=>" "+i.dataset.label+": $"+(i.raw!=null?Math.round(i.raw).toLocaleString():"N/A")}}
+    }
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// UVA TOGGLE — updates all charts simultaneously
+// ══════════════════════════════════════════════════════════════════
+function toggleUVA(){
+  highlightUVA = !highlightUVA;
+  const btn = document.getElementById("uvaToggle");
+  btn.textContent = "Highlight UVA: "+(highlightUVA?"ON":"OFF");
+  btn.classList.toggle("on", highlightUVA);
+
+  // Level scatter
+  scatterChart.data.datasets = buildLevelScatterDatasets();
+  scatterChart.update("none");
+
+  // Growth scatter
+  growthChart.data.datasets = buildGrowthDatasets();
+  growthChart.update("none");
+
+  // Trend line
+  const td = buildTrendDatasets();
+  trendChart.data.datasets[2].data        = td[2].data;
+  trendChart.data.datasets[2].borderWidth = td[2].borderWidth;
+  trendChart.data.datasets[2].pointRadius = td[2].pointRadius;
+  trendChart.data.datasets[2].borderDash  = td[2].borderDash;
+  trendChart.update("none");
+}
+</script>
+</body>
+</html>

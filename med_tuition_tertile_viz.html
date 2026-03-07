@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical School Tuition Change by Endowment Tercile | Interactive Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy:    #1B3A6B;
+    --crimson: #A8192E;
+    --teal:    #0F7173;
+    --amber:   #D4880A;
+    --slate:   #5A6E84;
+    --lgray:   #D6DCE4;
+    --offwhite:#F4F6F9;
+    --white:   #FFFFFF;
+    --uva:     #E8750A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--offwhite); color: #222; min-height: 100vh; }
+
+  /* ── Header ── */
+  .page-header { background: var(--navy); color: white; padding: 28px 40px 22px; }
+  .page-header h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .page-header p  { font-size: 0.88rem; opacity: 0.75; }
+
+  .main-wrapper { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 14px; margin-bottom: 28px;
+    background: white; border-radius: 10px; padding: 18px 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.07);
+  }
+  .controls label {
+    font-size: .85rem; font-weight: 600; color: var(--slate);
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+
+  /* Adjustment toggle */
+  .toggle-group { display: flex; border-radius: 7px; overflow: hidden; border: 2px solid var(--navy); }
+  .toggle-group button {
+    padding: 9px 22px; border: none; background: white; color: var(--navy);
+    font-size: .88rem; font-weight: 600; cursor: pointer; transition: background .18s,color .18s;
+  }
+  .toggle-group button.active { background: var(--navy); color: white; }
+  .toggle-group button:hover:not(.active) { background: var(--offwhite); }
+
+  /* View toggle */
+  .view-group { display: flex; border-radius: 7px; overflow: hidden; border: 2px solid var(--teal); }
+  .view-group button {
+    padding: 9px 20px; border: none; background: white; color: var(--teal);
+    font-size: .88rem; font-weight: 600; cursor: pointer; transition: background .18s,color .18s;
+  }
+  .view-group button.active { background: var(--teal); color: white; }
+  .view-group button:hover:not(.active) { background: var(--offwhite); }
+
+  /* UVA toggle */
+  .uva-group { display: flex; border-radius: 7px; overflow: hidden; border: 2px solid var(--uva); }
+  .uva-group button {
+    padding: 9px 18px; border: none; background: white; color: var(--uva);
+    font-size: .88rem; font-weight: 600; cursor: pointer; transition: background .18s,color .18s;
+  }
+  .uva-group button.active { background: var(--uva); color: white; }
+  .uva-group button:hover:not(.active) { background: #FFF5EC; }
+
+  .note-pill {
+    margin-left: auto; background: #E8F5E9; border: 1px solid #81C784;
+    border-radius: 6px; padding: 6px 12px; font-size: .78rem; color: #2E7D32;
+  }
+  .gap-pill {
+    background: #FFF8E1; border: 1px solid #FFD54F;
+    border-radius: 6px; padding: 6px 12px; font-size: .78rem; color: #E65100;
+  }
+
+  /* ── Stat boxes ── */
+  .stats-bar { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-box {
+    flex: 1; min-width: 160px; background: white; border-radius: 10px;
+    padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); border-top: 4px solid var(--lgray);
+  }
+  .stat-box.high  { border-top-color: var(--navy); }
+  .stat-box.mid   { border-top-color: var(--teal); }
+  .stat-box.uva   { border-top-color: var(--uva);  }
+  .stat-box .label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--slate); margin-bottom: 4px; }
+  .stat-box .value { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+  .stat-box .sub   { font-size: .78rem; color: var(--slate); margin-top: 2px; }
+  .stat-box.high .value { color: var(--navy); }
+  .stat-box.mid  .value { color: var(--teal); }
+  .stat-box.uva  .value { color: var(--uva);  }
+
+  /* ── Cards & charts ── */
+  .chart-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  .chart-grid.two-col { grid-template-columns: 1fr 1fr; }
+  @media(max-width:720px){ .chart-grid.two-col{ grid-template-columns:1fr; } }
+
+  .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.07); padding: 24px; }
+  .card h2 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .card .subtitle { font-size: .8rem; color: var(--slate); margin-bottom: 16px; }
+  .chart-container { position: relative; width: 100%; height: 320px; }
+  .chart-container.tall { height: 380px; }
+
+  /* ── Regression callout ── */
+  .reg-callout {
+    background: white; border-left: 5px solid var(--navy);
+    border-radius: 0 10px 10px 0; padding: 20px 26px;
+    margin-top: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .reg-callout h3 {
+    font-size: .9rem; font-weight: 700; color: var(--navy); margin-bottom: 12px;
+    text-transform: uppercase; letter-spacing: .4px;
+  }
+  .reg-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 14px; }
+  .reg-item { font-size: .83rem; line-height: 1.5; }
+  .reg-item strong { color: var(--navy); }
+  .reg-item .coef  { font-size: 1.1rem; font-weight: 700; }
+  .sig  { color: var(--crimson); }
+  .nsig { color: var(--slate); }
+
+  /* ── Data note ── */
+  .data-note {
+    margin-top: 20px; font-size: .76rem; color: var(--slate); line-height: 1.6;
+    background: #F8F9FA; border-radius: 8px; padding: 12px 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Medical School Tuition Change by Endowment Tercile, 2019–2023</h1>
+  <p>25 U.S. MD-granting programs &nbsp;·&nbsp; Nominal and national CPI-adjusted annual tuition change &nbsp;·&nbsp; AAMC Tuition &amp; Student Fees Report (direct extract)</p>
+</div>
+
+<div class="main-wrapper">
+
+  <!-- Controls -->
+  <div class="controls">
+    <label>Adjustment:</label>
+    <div class="toggle-group">
+      <button id="btn-raw" class="active" onclick="setAdj('raw')">Unadjusted (Nominal)</button>
+      <button id="btn-adj"               onclick="setAdj('adj')">National CPI-Adjusted</button>
+    </div>
+    <label style="margin-left:8px">View:</label>
+    <div class="view-group">
+      <button id="btn-bar"  class="active" onclick="setView('bar')">Annual Bar</button>
+      <button id="btn-line"              onclick="setView('line')">Trend Lines</button>
+      <button id="btn-cum"               onclick="setView('cum')">Cumulative</button>
+    </div>
+    <label style="margin-left:8px">UVA:</label>
+    <div class="uva-group">
+      <button id="btn-uva" class="active" onclick="toggleUVA()">● Highlight UVA: ON</button>
+    </div>
+    <div class="note-pill">✓ AAMC Tuition &amp; Student Fees Report (2013–2026) · 9 years of data</div>
+  </div>
+
+  <!-- Stat boxes -->
+  <div class="stats-bar">
+    <div class="stat-box high">
+      <div class="label">High Endowment (&gt;$6B)</div>
+      <div class="value" id="stat-high">3.1%</div>
+      <div class="sub"   id="stat-high-sub">mean annual nominal · 15 institutions</div>
+    </div>
+    <div class="stat-box mid">
+      <div class="label">Mid Endowment ($1–6B)</div>
+      <div class="value" id="stat-mid">3.1%</div>
+      <div class="sub"   id="stat-mid-sub">mean annual nominal · 9 institutions (excl. NYU)</div>
+    </div>
+    <div class="stat-box uva">
+      <div class="label">UVA School of Medicine</div>
+      <div class="value" id="stat-uva">1.2%</div>
+      <div class="sub"   id="stat-uva-sub">mean annual nominal · High tercile · Public</div>
+    </div>
+  </div>
+
+  <!-- Main tertile chart -->
+  <div class="chart-grid" style="margin-bottom:24px">
+    <div class="card">
+      <h2 id="main-title">Annual Tuition Change by Endowment Tercile</h2>
+      <div class="subtitle" id="main-sub">Mean % change in first-year resident tuition + fees; nominal (unadjusted) · NYU Grossman excluded from Mid avg (tuition-free since 2018)</div>
+      <div class="chart-container tall"><canvas id="mainChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Sector × Tercile + Scatter -->
+  <div class="chart-grid two-col">
+    <div class="card">
+      <h2>Sector × Tercile Comparison</h2>
+      <div class="subtitle" id="sect-sub">Mean annual % change across valid years, by sector and endowment group · excl. NYU</div>
+      <div class="chart-container"><canvas id="sectChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Endowment Size vs. Tuition Growth</h2>
+      <div class="subtitle" id="scatter-sub">Institution-level means (AY 2014-15 through 2022-23, 9 yrs) · OLS regression line · excl. NYU</div>
+      <div class="chart-container"><canvas id="scatterChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Regression callout -->
+  <div class="reg-callout">
+    <h3>Regression Summary — Effect of ln(Endowment) on Annual Tuition Change</h3>
+    <div class="reg-grid">
+      <div class="reg-item">
+        <strong>Bivariate OLS (all 24, 9 yrs)</strong><br>
+        <span class="coef nsig">β = −0.014</span><br>
+        R² = 0.0001 &nbsp;·&nbsp; p = 0.961 &nbsp;·&nbsp; n = 24
+      </div>
+      <div class="reg-item">
+        <strong>Private schools only (n=18)</strong><br>
+        <span class="coef nsig">β = −0.072</span><br>
+        R² = 0.012 &nbsp;·&nbsp; p = 0.663 &nbsp;·&nbsp; not significant
+      </div>
+      <div class="reg-item">
+        <strong>Public schools only (n=6)</strong><br>
+        <span class="coef nsig">β = +0.43</span><br>
+        R² = 0.016 &nbsp;·&nbsp; p = 0.809 &nbsp;·&nbsp; driven by Michigan &amp; UNC outliers
+      </div>
+      <div class="reg-item">
+        <strong>Pub × High</strong> (Michigan, Ohio State, UVA)<br>
+        <span class="coef nsig">Mean +2.6%/yr nominal</span><br>
+        Michigan +6.0% dominates; UVA only +1.1%; Ohio State +0.7%
+      </div>
+      <div class="reg-item">
+        <strong>Pvt × High</strong> (12 schools)<br>
+        <span class="coef nsig">Mean +3.0%/yr nominal</span><br>
+        CPI-adjusted: +0.1%/yr — real tuition essentially flat
+      </div>
+      <div class="reg-item">
+        <strong>Key finding</strong><br>
+        <span class="coef nsig">No significant relationship</span><br>
+        endowment size does not predict tuition growth rate across 9 years
+      </div>
+    </div>
+  </div>
+
+  <div class="data-note">
+    <strong>Data sources:</strong>
+    AAMC "Tuition and Student Fees Report, 2013–2026" — direct extract via extract_aamc_tuition.py;
+    first-year resident/in-state tuition + required fees; health insurance excluded.
+    NACUBO-Commonfund Study of Endowments FY2022 (index-adjusted for other years using national market returns).
+    BLS CPI-U national annual series for cost-of-living adjustment.
+    Endowment terciles: High &gt;$6B (n=15), Mid $1–6B (n=10, incl. 1 tuition-free).
+    <strong>Coverage:</strong> Panel covers AY 2013-14 through AY 2022-23 (10 years); year-over-year changes computed for
+    9 academic years (AY 2014-15 through AY 2022-23), with 24 schools × 9 years = 216 valid YoY observations (excl. NYU).
+    NYU Grossman SOM (tuition-free since AY 2018-19) is excluded from all averages.
+    Michigan's large multi-year increase (+6.0%/yr nominal) substantially influences public averages.
+  </div>
+
+</div><!-- /main-wrapper -->
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════
+// Years: AY 2014-15 through AY 2022-23 (9 years; all years now available from AAMC source)
+const YEARS = ['AY 2014-15','AY 2015-16','AY 2016-17','AY 2017-18','AY 2018-19','AY 2019-20','AY 2020-21','AY 2021-22','AY 2022-23'];
+
+// Tertile mean annual % change — High (n=15) and Mid excl NYU (n=9)
+const RAW = {
+  high: [3.070, 3.538, 2.934, 3.055, 3.028, 3.466, 1.612, 2.862, 2.690],
+  mid:  [3.204, 4.091, 4.441, 4.034, 3.844, 3.479, 2.116, 2.725, 2.752],
+};
+const ADJ = {
+  high: [2.970, 2.238, 0.834, 0.655, 0.728, 2.266, -3.088, -5.138, -1.410],
+  mid:  [3.104, 2.791, 2.341, 1.634, 1.544, 2.279, -2.584, -5.275, -1.348],
+};
+
+// Sector × Tercile mean annual (9 years, excl tuition-free)
+const SECT_RAW = {
+  pub:  { high: 2.594, mid: 3.910 },
+  pvt:  { high: 2.998, mid: 3.159 },
+};
+const SECT_ADJ = {
+  pub:  { high: -0.317, mid: 0.999 },
+  pvt:  { high:  0.087, mid: 0.248 },
+};
+
+// Stat box values (mean across all 9 years)
+const STATS = {
+  raw: { high: 2.917, mid: 3.410, uva: 1.072 },
+  adj: { high: 0.006, mid: 0.499, uva: -1.839 },
+};
+
+// Institution-level scatter: mean of 9 YoY changes (AY 2014-15 through AY 2022-23)
+// x = FY2022 endowment ($B)
+const SCATTER = [
+  {label:"Tulane SOM",                x: 2.200, y_raw: 2.73, y_adj:-0.18,  type:"Pvt", isUVA:false},
+  {label:"UCSF School of Medicine",   x: 2.300, y_raw: 1.96, y_adj:-0.95,  type:"Pub", isUVA:false},
+  {label:"Weill Cornell Medicine",    x: 2.500, y_raw: 3.21, y_adj: 0.30,  type:"Pvt", isUVA:false},
+  {label:"Boston University SOM",     x: 2.500, y_raw: 3.02, y_adj: 0.11,  type:"Pvt", isUVA:false},
+  {label:"Case Western SOM",          x: 2.500, y_raw: 3.08, y_adj: 0.17,  type:"Pvt", isUVA:false},
+  {label:"Georgetown SOM",            x: 2.500, y_raw: 2.96, y_adj: 0.04,  type:"Pvt", isUVA:false},
+  {label:"U Rochester SOM",           x: 2.600, y_raw: 3.95, y_adj: 1.04,  type:"Pvt", isUVA:false},
+  {label:"U Pittsburgh SOM",          x: 4.500, y_raw: 3.03, y_adj: 0.12,  type:"Pub", isUVA:false},
+  {label:"UNC School of Medicine",    x: 5.200, y_raw: 6.74, y_adj: 3.83,  type:"Pub", isUVA:false},
+  {label:"Brown Warren Alpert SOM",   x: 7.100, y_raw: 3.53, y_adj: 0.62,  type:"Pvt", isUVA:false},
+  {label:"Ohio State SOM",            x: 7.800, y_raw: 0.71, y_adj:-2.20,  type:"Pub", isUVA:false},
+  {label:"Johns Hopkins SOM",         x: 8.000, y_raw: 3.00, y_adj: 0.09,  type:"Pvt", isUVA:false},
+  {label:"WashU School of Medicine",  x:10.200, y_raw: 2.51, y_adj:-0.40,  type:"Pvt", isUVA:false},
+  {label:"Emory School of Medicine",  x:10.900, y_raw: 0.97, y_adj:-1.94,  type:"Pvt", isUVA:false},
+  {label:"Vanderbilt SOM",            x:11.200, y_raw: 4.39, y_adj: 1.48,  type:"Pvt", isUVA:false},
+  {label:"Northwestern Feinberg SOM", x:13.100, y_raw: 3.56, y_adj: 0.65,  type:"Pvt", isUVA:false},
+  {label:"Duke School of Medicine",   x:13.500, y_raw: 2.76, y_adj:-0.15,  type:"Pvt", isUVA:false},
+  {label:"Columbia Vagelos SOM",      x:13.600, y_raw: 3.29, y_adj: 0.38,  type:"Pvt", isUVA:false},
+  {label:"UVA School of Medicine",    x:14.300, y_raw: 1.07, y_adj:-1.84,  type:"Pub", isUVA:true },
+  {label:"U Michigan Medical School", x:17.900, y_raw: 6.00, y_adj: 3.09,  type:"Pub", isUVA:false},
+  {label:"Penn Perelman SOM",         x:21.000, y_raw: 3.14, y_adj: 0.23,  type:"Pvt", isUVA:false},
+  {label:"Stanford School of Med.",   x:36.500, y_raw: 2.97, y_adj: 0.06,  type:"Pvt", isUVA:false},
+  {label:"Yale School of Medicine",   x:41.400, y_raw: 3.13, y_adj: 0.22,  type:"Pvt", isUVA:false},
+  {label:"Harvard Medical School",    x:53.200, y_raw: 2.72, y_adj:-0.19,  type:"Pvt", isUVA:false},
+];
+
+// ══════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════
+let adjMode    = 'raw';  // 'raw' | 'adj'
+let viewMode   = 'bar';  // 'bar' | 'line' | 'cum'
+let highlightUVA = true;
+
+// ══════════════════════════════════════════════════════════════════
+// COLOURS — matches undergrad viz palette
+// ══════════════════════════════════════════════════════════════════
+const C = {
+  high:   { solid: '#1B3A6B', alpha: 'rgba(27,58,107,0.75)' },
+  mid:    { solid: '#0F7173', alpha: 'rgba(15,113,115,0.75)' },
+  pub:    '#1B3A6B',
+  pvt:    '#A8192E',
+  uva:    '#E8750A',
+};
+
+// ══════════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════════
+function fmt(v){ return v==null?"n/a":(v>=0?"+":"")+v.toFixed(2)+"%" }
+function cumSum(arr){
+  let s=0; return arr.map(v=>{ s+=v||0; return +s.toFixed(3); });
+}
+
+function getSeriesData(key){
+  const src = adjMode==='raw' ? RAW : ADJ;
+  if(viewMode==='cum') return cumSum(src[key]);
+  return src[key];
+}
+
+function olsLine(pts){
+  const lpts = pts.map(p=>({x:Math.log10(p.x), y:p.y}));
+  const n=lpts.length;
+  const mx=lpts.reduce((a,b)=>a+b.x,0)/n, my=lpts.reduce((a,b)=>a+b.y,0)/n;
+  const num=lpts.reduce((a,b)=>a+(b.x-mx)*(b.y-my),0);
+  const den=lpts.reduce((a,b)=>a+(b.x-mx)**2,0);
+  const m=num/den, c=my-m*mx;
+  const xs=pts.map(p=>p.x);
+  const xmin=Math.min(...xs), xmax=Math.max(...xs);
+  const logMin=Math.log10(xmin), logMax=Math.log10(xmax);
+  const line=[];
+  for(let i=0;i<=40;i++){
+    const lx=logMin+(logMax-logMin)*i/40;
+    line.push({x:Math.pow(10,lx), y:m*lx+c});
+  }
+  return line;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STAT BOX UPDATES
+// ══════════════════════════════════════════════════════════════════
+function updateStats(){
+  const s = STATS[adjMode];
+  const adjLabel = adjMode==='raw' ? 'mean annual nominal' : 'mean annual CPI-adjusted';
+  document.getElementById('stat-high').textContent = (s.high>=0?'+':'')+s.high.toFixed(1)+'%';
+  document.getElementById('stat-high-sub').textContent = adjLabel+' · 15 institutions';
+  document.getElementById('stat-mid').textContent  = (s.mid>=0?'+':'')+s.mid.toFixed(1)+'%';
+  document.getElementById('stat-mid-sub').textContent  = adjLabel+' · 9 institutions (excl. NYU)';
+  document.getElementById('stat-uva').textContent  = (s.uva>=0?'+':'')+s.uva.toFixed(1)+'%';
+  document.getElementById('stat-uva-sub').textContent  = adjLabel+' · High tercile · Public';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MAIN TERTILE CHART
+// ══════════════════════════════════════════════════════════════════
+function buildMainDatasets(){
+  return [
+    { label:'High (>$6B) · 15 institutions',
+      data: getSeriesData('high'),
+      backgroundColor: viewMode==='bar' ? C.high.solid : C.high.alpha,
+      borderColor: C.high.solid, borderWidth: viewMode==='bar' ? 0 : 2.5,
+      fill: viewMode==='line', tension: 0.3, pointRadius: viewMode==='bar' ? 0 : 4,
+      pointHoverRadius: 6, barPercentage: 0.6, categoryPercentage: 0.7, spanGaps: true,
+    },
+    { label:'Mid ($1–6B) · 9 institutions (excl. NYU)',
+      data: getSeriesData('mid'),
+      backgroundColor: viewMode==='bar' ? C.mid.solid : C.mid.alpha,
+      borderColor: C.mid.solid, borderWidth: viewMode==='bar' ? 0 : 2.5,
+      fill: viewMode==='line', tension: 0.3, pointRadius: viewMode==='bar' ? 0 : 4,
+      pointHoverRadius: 6, barPercentage: 0.6, categoryPercentage: 0.7, spanGaps: true,
+    },
+  ];
+}
+
+function makeYAxisTitle(){
+  if(viewMode==='cum') return adjMode==='raw' ? 'Cumulative Nominal Change (%)' : 'Cumulative CPI-Adjusted Change (%)';
+  return adjMode==='raw' ? 'Annual Nominal Change (%)' : 'Annual CPI-Adjusted Change (%)';
+}
+
+let mainChart=null, sectChart=null, scatterChart=null;
+
+function initMain(){
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  mainChart = new Chart(ctx,{
+    type: viewMode==='bar' ? 'bar' : 'line',
+    data: { labels: YEARS, datasets: buildMainDatasets() },
+    options:{
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins:{
+        legend:{ position:'top', labels:{ font:{size:12}, padding:16 } },
+        tooltip:{ callbacks:{ label:c=>' '+c.dataset.label.split(' ·')[0]+': '+fmt(c.raw) } }
+      },
+      scales:{
+        x:{ grid:{ display:false }, ticks:{ font:{size:11} } },
+        y:{
+          grid:{ color:'#E8ECF0' },
+          ticks:{ font:{size:11}, callback:v=>v.toFixed(1)+'%' },
+          title:{ display:true, text: makeYAxisTitle(), font:{size:11} }
+        }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SECTOR × TERCILE CHART
+// ══════════════════════════════════════════════════════════════════
+function buildSectDatasets(){
+  const src = adjMode==='raw' ? SECT_RAW : SECT_ADJ;
+  return [
+    { label:'Public', data:[ src.pub.high, src.pub.mid ], backgroundColor: C.pub, borderRadius:4, barPercentage:0.6 },
+    { label:'Private (excl. NYU)', data:[ src.pvt.high, src.pvt.mid ], backgroundColor: C.pvt, borderRadius:4, barPercentage:0.6 },
+  ];
+}
+
+function initSect(){
+  const ctx = document.getElementById('sectChart').getContext('2d');
+  sectChart = new Chart(ctx,{
+    type:'bar',
+    data:{ labels:['High (>$6B)','Mid ($1–6B)'], datasets: buildSectDatasets() },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'top', labels:{ font:{size:12}, padding:12 } },
+        tooltip:{ callbacks:{ label:c=>' '+c.dataset.label+': '+fmt(c.raw) } }
+      },
+      scales:{
+        x:{ grid:{display:false} },
+        y:{
+          grid:{ color:'#E8ECF0' },
+          ticks:{ callback:v=>v.toFixed(1)+'%', font:{size:11} },
+          title:{ display:true, text: adjMode==='raw' ? 'Mean Annual Nominal Change (%)' : 'Mean Annual CPI-Adj. Change (%)', font:{size:11} }
+        }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SCATTER CHART
+// ══════════════════════════════════════════════════════════════════
+function buildScatterDatasets(){
+  const yKey = adjMode==='raw' ? 'y_raw' : 'y_adj';
+  const pubPts=[], pvtPts=[], uvaPt=[];
+  SCATTER.forEach(d=>{
+    const pt = {x:d.x, y:d[yKey], label:d.label};
+    if(d.isUVA)            uvaPt.push(pt);
+    else if(d.type==='Pub') pubPts.push(pt);
+    else                    pvtPts.push(pt);
+  });
+  // OLS on all non-UVA (UVA excluded from regression line so it doesn't pull its own trend)
+  const allForOls = SCATTER.filter(d=>!d.isUVA).map(d=>({x:d.x,y:d[yKey]}));
+  const ols = olsLine(allForOls);
+  return [
+    { label:'Public',  data:pubPts, type:'scatter', backgroundColor:'rgba(27,58,107,0.75)',
+      pointRadius:7, pointHoverRadius:10, borderColor:'rgba(27,58,107,0.4)', borderWidth:1 },
+    { label:'Private', data:pvtPts, type:'scatter', backgroundColor:'rgba(168,25,46,0.7)',
+      pointRadius:7, pointHoverRadius:10, borderColor:'rgba(168,25,46,0.35)', borderWidth:1 },
+    { label:'UVA School of Medicine', data:uvaPt, type:'scatter',
+      backgroundColor: highlightUVA ? C.uva : 'rgba(27,58,107,0.75)',
+      pointRadius:     highlightUVA ? 14 : 7,
+      pointHoverRadius:highlightUVA ? 18 : 10,
+      pointStyle:      'circle',
+      borderColor:     highlightUVA ? 'rgba(255,255,255,0.9)' : 'rgba(27,58,107,0.4)',
+      borderWidth:     highlightUVA ? 2.5 : 1,
+    },
+    { label:'OLS regression', data:ols, type:'line',
+      borderColor:'rgba(90,110,132,0.6)', backgroundColor:'transparent',
+      borderWidth:1.8, borderDash:[5,4], pointRadius:0, pointHoverRadius:0, tension:0 },
+  ];
+}
+
+function initScatter(){
+  const ctx = document.getElementById('scatterChart').getContext('2d');
+  const yLabel = adjMode==='raw' ? 'Mean Annual Nominal Change (%)' : 'Mean Annual CPI-Adj. Change (%)';
+  scatterChart = new Chart(ctx,{
+    type:'scatter',
+    data:{ datasets: buildScatterDatasets() },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{ type:'logarithmic',
+            title:{ display:true, text:'Endowment (Billions USD, log scale)', font:{size:11} },
+            ticks:{ callback:v=>'$'+v+'B' },
+            grid:{ color:'#E8ECF0' } },
+        y:{ title:{ display:true, text:yLabel, font:{size:11} },
+            ticks:{ callback:v=>v.toFixed(1)+'%' },
+            grid:{ color:'#E8ECF0' } }
+      },
+      plugins:{
+        legend:{ position:'top', labels:{ font:{size:11}, padding:12, usePointStyle:true,
+          filter:i=>i.text!=='OLS regression' } },
+        tooltip:{
+          filter:i=>i.datasetIndex!==3,
+          callbacks:{
+            title:i=>i[0]?.raw?.label||'',
+            label:i=>['  Endowment: $'+i.raw.x.toFixed(2)+'B',
+                       '  '+(adjMode==='raw'?'Nominal':'CPI-Adj.')+': '+fmt(i.raw.y)]
+          }
+        }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INIT ALL CHARTS
+// ══════════════════════════════════════════════════════════════════
+initMain();
+initSect();
+initScatter();
+updateStats();
+
+// ══════════════════════════════════════════════════════════════════
+// CONTROL HANDLERS
+// ══════════════════════════════════════════════════════════════════
+function setAdj(mode){
+  adjMode = mode;
+  document.getElementById('btn-raw').classList.toggle('active', mode==='raw');
+  document.getElementById('btn-adj').classList.toggle('active', mode==='adj');
+  rebuildAll();
+}
+
+function setView(mode){
+  viewMode = mode;
+  ['bar','line','cum'].forEach(v=>{
+    document.getElementById('btn-'+v).classList.toggle('active', v===mode);
+  });
+  rebuildAll();
+}
+
+function toggleUVA(){
+  highlightUVA = !highlightUVA;
+  const btn = document.getElementById('btn-uva');
+  btn.textContent = '● Highlight UVA: '+(highlightUVA?'ON':'OFF');
+  btn.classList.toggle('active', highlightUVA);
+  // Only scatter needs updating for UVA toggle
+  scatterChart.data.datasets = buildScatterDatasets();
+  scatterChart.update('none');
+}
+
+function rebuildAll(){
+  updateStats();
+
+  // Main chart — type can change (bar ↔ line)
+  const newType = viewMode==='bar' ? 'bar' : 'line';
+  if(mainChart.config.type !== newType){
+    mainChart.destroy();
+    initMain();
+  } else {
+    mainChart.data.datasets = buildMainDatasets();
+    mainChart.options.scales.y.title.text = makeYAxisTitle();
+    mainChart.update();
+  }
+
+  // Titles & subtitles
+  const adjLabel = adjMode==='raw' ? 'nominal (unadjusted)' : 'national CPI-adjusted';
+  const viewLabel = viewMode==='bar' ? 'Annual % change' : viewMode==='line' ? 'Annual % change — trend lines' : 'Cumulative % change';
+  document.getElementById('main-title').textContent = viewMode==='cum'
+    ? 'Cumulative Tuition Change by Endowment Tercile'
+    : 'Annual Tuition Change by Endowment Tercile';
+  document.getElementById('main-sub').textContent =
+    'Mean % change in first-year resident tuition + fees; '+adjLabel+' · NYU excluded from Mid avg';
+  document.getElementById('sect-sub').textContent =
+    'Mean annual '+adjLabel+' % change across valid years, by sector and endowment group · excl. NYU';
+  document.getElementById('scatter-sub').textContent =
+    'Institution-level means · '+adjLabel+' · OLS regression line · excl. NYU';
+
+  // Sector chart
+  sectChart.data.datasets = buildSectDatasets();
+  sectChart.options.scales.y.title.text = adjMode==='raw'
+    ? 'Mean Annual Nominal Change (%)' : 'Mean Annual CPI-Adj. Change (%)';
+  sectChart.update();
+
+  // Scatter
+  scatterChart.data.datasets = buildScatterDatasets();
+  scatterChart.options.scales.y.title.text = adjMode==='raw'
+    ? 'Mean Annual Nominal Change (%)' : 'Mean Annual CPI-Adj. Change (%)';
+  scatterChart.update('none');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBBB Impact on Medical School Financing</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy:   #1B3A6B;
+  --teal:   #0F7173;
+  --red:    #A8192E;
+  --orange: #E8750A;
+  --gold:   #C9972B;
+  --lgray:  #F5F7FA;
+  --mid:    #E8ECF2;
+  --border: #D1D9E6;
+  --text:   #1A2033;
+  --sub:    #5A6785;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Segoe UI',Arial,sans-serif; background:#fff; color:var(--text); line-height:1.6; }
+
+/* ── Header ── */
+.page-header {
+  background: linear-gradient(135deg, #0D1F3C 0%, #1B3A6B 60%, #0F4C81 100%);
+  color: #fff;
+  padding: 42px 48px 36px;
+}
+.page-header h1 { font-size:1.85rem; font-weight:700; margin-bottom:6px; letter-spacing:-0.3px; }
+.page-header p  { font-size:1rem; opacity:0.82; max-width:780px; }
+.page-header .tag {
+  display:inline-block; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3);
+  border-radius:20px; font-size:0.78rem; padding:3px 12px; margin-right:6px; margin-top:10px; letter-spacing:.5px;
+}
+
+/* ── Hero stat row ── */
+.hero-stats {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+  border-bottom:2px solid var(--border);
+}
+.hero-stat {
+  padding:28px 32px; border-right:1px solid var(--border);
+}
+.hero-stat:last-child { border-right:none; }
+.hero-stat .label { font-size:0.78rem; font-weight:600; color:var(--sub); letter-spacing:.6px; text-transform:uppercase; margin-bottom:6px; }
+.hero-stat .value { font-size:2rem; font-weight:700; color:var(--navy); line-height:1.1; }
+.hero-stat .sub   { font-size:0.78rem; color:var(--sub); margin-top:4px; }
+.hero-stat.warn .value { color:var(--red); }
+.hero-stat.uva  .value { color:var(--orange); }
+
+/* ── Law comparison cards ── */
+.law-section { padding:36px 48px; background:var(--lgray); border-bottom:1px solid var(--border); }
+.law-section h2 { font-size:1.15rem; font-weight:700; color:var(--navy); margin-bottom:20px; }
+.law-cards { display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:900px; }
+.law-card {
+  background:#fff; border:1px solid var(--border); border-radius:10px; padding:24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.law-card.current { border-top:4px solid var(--navy); }
+.law-card.obbb    { border-top:4px solid var(--red);  }
+.law-card h3 { font-size:1rem; font-weight:700; margin-bottom:16px; }
+.law-card.current h3 { color:var(--navy); }
+.law-card.obbb h3    { color:var(--red);  }
+.law-row { display:flex; justify-content:space-between; align-items:baseline;
+           padding:8px 0; border-bottom:1px solid var(--border); font-size:0.88rem; }
+.law-row:last-child { border-bottom:none; }
+.law-row .key   { color:var(--sub); }
+.law-row .val   { font-weight:600; color:var(--text); }
+.law-row .val.bad { color:var(--red); }
+.law-row .val.good{ color:#1a6b3c; }
+
+/* ── Main wrapper ── */
+.main-wrapper { max-width:1200px; margin:0 auto; padding:36px 48px; }
+
+/* ── Section headings ── */
+.section-head { margin-bottom:20px; }
+.section-head h2 { font-size:1.2rem; font-weight:700; color:var(--navy); margin-bottom:4px; }
+.section-head p  { font-size:0.88rem; color:var(--sub); }
+
+/* ── Chart cards ── */
+.chart-card {
+  background:#fff; border:1px solid var(--border); border-radius:10px;
+  padding:24px 28px; margin-bottom:28px; box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.chart-card h3 { font-size:1rem; font-weight:700; color:var(--navy); margin-bottom:4px; }
+.chart-card .sub { font-size:0.82rem; color:var(--sub); margin-bottom:16px; }
+.chart-container { position:relative; }
+.chart-tall { height:520px; }
+.chart-med  { height:380px; }
+
+/* ── Toggles ── */
+.controls { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+.pill {
+  padding:6px 16px; border-radius:20px; border:1.5px solid var(--border);
+  background:#fff; font-size:0.82rem; font-weight:600; cursor:pointer; color:var(--sub);
+  transition:all .15s;
+}
+.pill.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+.pill.active.red  { background:var(--red);    border-color:var(--red); }
+.pill.active.orange { background:var(--orange); border-color:var(--orange); }
+
+/* ── Dual bar callout ── */
+.callout-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:20px 0; }
+.callout-box {
+  background:#fff; border:1px solid var(--border); border-radius:8px; padding:18px 20px;
+  border-top:3px solid var(--navy);
+}
+.callout-box.mid { border-top-color:var(--teal); }
+.callout-box.warn{ border-top-color:var(--red);  }
+.callout-box .lab { font-size:0.78rem; font-weight:600; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; }
+.callout-box .num { font-size:1.5rem; font-weight:700; color:var(--navy); }
+.callout-box.mid .num { color:var(--teal); }
+.callout-box.warn .num{ color:var(--red);  }
+.callout-box .det { font-size:0.78rem; color:var(--sub); margin-top:2px; }
+
+/* ── UVA spotlight ── */
+.uva-spot {
+  background:linear-gradient(135deg, #FFF4E6, #FFF9F2);
+  border:2px solid var(--orange); border-radius:10px;
+  padding:24px 28px; margin:28px 0;
+}
+.uva-spot h3 { color:var(--orange); font-size:1rem; margin-bottom:14px; }
+.uva-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+.uva-metric .label { font-size:0.75rem; color:var(--sub); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+.uva-metric .val   { font-size:1.2rem; font-weight:700; color:var(--orange); }
+.uva-narrative { font-size:0.88rem; color:var(--text); line-height:1.6; border-top:1px solid rgba(232,117,10,.2); padding-top:12px; }
+
+/* ── Assumptions ── */
+.assumptions {
+  background:var(--lgray); border:1px solid var(--border); border-radius:8px;
+  padding:18px 22px; font-size:0.8rem; color:var(--sub); line-height:1.7; margin-top:28px;
+}
+.assumptions strong { color:var(--text); }
+
+/* ── Legend row ── */
+.legend-row { display:flex; gap:18px; flex-wrap:wrap; margin-bottom:14px; }
+.legend-item { display:flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--sub); }
+.legend-dot { width:12px; height:12px; border-radius:50%; }
+.legend-rect { width:16px; height:10px; border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ── PAGE HEADER ── -->
+<div class="page-header">
+  <h1>One Big Beautiful Bill: Impact on Medical School Financing</h1>
+  <p>Projected total cost (tuition + living + interest) under current federal loan policy vs. the OBBB loan cap reform —
+     analysis for 24 U.S. MD-granting programs, AY 2022-23 tuition data</p>
+  <span class="tag">OBBB / H.R. 1 · Signed 2025</span>
+  <span class="tag">24 MD Programs</span>
+  <span class="tag">10-Year Repayment Projection</span>
+</div>
+
+<!-- ── HERO STAT ROW ── -->
+<div class="hero-stats">
+  <div class="hero-stat">
+    <div class="label">Avg Total Cost — Current Law</div>
+    <div class="value">$661K</div>
+    <div class="sub">principal + in-school interest + 10-yr repayment</div>
+  </div>
+  <div class="hero-stat warn">
+    <div class="label">Avg Total Cost — Under OBBB</div>
+    <div class="value">$699K</div>
+    <div class="sub">federal cap + private gap loans at 11%</div>
+  </div>
+  <div class="hero-stat warn">
+    <div class="label">Average Increase</div>
+    <div class="value">+$38,203</div>
+    <div class="sub">+5.8% more paid over life of loans</div>
+  </div>
+  <div class="hero-stat uva">
+    <div class="label">UVA SOM Increase</div>
+    <div class="value">+$26,310</div>
+    <div class="sub">+4.5% · $578K → $605K total cost</div>
+  </div>
+</div>
+
+<!-- ── WHAT CHANGED ── -->
+<div class="law-section">
+  <h2>What Changed: Current Law vs. One Big Beautiful Bill (Effective July 1, 2026)</h2>
+  <div class="law-cards">
+    <div class="law-card current">
+      <h3>⚖ Current Federal Loan Policy</h3>
+      <div class="law-row"><span class="key">Graduate Unsubsidized Stafford</span><span class="val good">$20,500/year</span></div>
+      <div class="law-row"><span class="key">Graduate PLUS Loans</span><span class="val good">Up to full COA (no cap)</span></div>
+      <div class="law-row"><span class="key">Annual Borrowing Limit</span><span class="val good">= Cost of Attendance</span></div>
+      <div class="law-row"><span class="key">Aggregate Federal Cap (grad)</span><span class="val good">$138,500 incl. undergrad</span></div>
+      <div class="law-row"><span class="key">Grad PLUS Interest Rate</span><span class="val">8.94% (AY 2025-26)</span></div>
+      <div class="law-row"><span class="key">Unsubsidized Rate</span><span class="val">7.94% (AY 2025-26)</span></div>
+    </div>
+    <div class="law-card obbb">
+      <h3>🔴 OBBB — Effective July 1, 2026</h3>
+      <div class="law-row"><span class="key">Graduate PLUS Program</span><span class="val bad">ELIMINATED</span></div>
+      <div class="law-row"><span class="key">New Annual Cap (Professional)</span><span class="val bad">$50,000/year max</span></div>
+      <div class="law-row"><span class="key">Aggregate Federal Cap</span><span class="val bad">$200,000 total (all federal)</span></div>
+      <div class="law-row"><span class="key">Effective Med School Budget</span><span class="val bad">~$163K (after ~$37K undergrad)</span></div>
+      <div class="law-row"><span class="key">Year 4 Federal Availability</span><span class="val bad">~$13,000 (aggregate exhausted)</span></div>
+      <div class="law-row"><span class="key">Gap Must Be Covered By</span><span class="val bad">Private loans, institutional aid, etc.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="main-wrapper">
+
+  <!-- ═══ SECTION 1: Annual Funding Gap ═══ -->
+  <div class="section-head">
+    <h2>Annual Funding Gap Under OBBB</h2>
+    <p>Amount each school's annual cost-of-attendance exceeds the $50,000/year federal cap — must be covered by private loans or other means</p>
+  </div>
+
+  <div class="chart-card">
+    <h3>Annual COA vs. $50,000 Federal Cap — by School</h3>
+    <div class="sub">AY 2022-23 tuition + estimated $27,000/year living expenses · schools sorted by tuition</div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-rect" style="background:var(--red);opacity:.8"></div>Private school COA</div>
+      <div class="legend-item"><div class="legend-rect" style="background:var(--navy);opacity:.8"></div>Public school COA</div>
+      <div class="legend-item"><div class="legend-rect" style="background:var(--orange)"></div>UVA SOM</div>
+    </div>
+    <div class="chart-container chart-tall"><canvas id="gapChart"></canvas></div>
+  </div>
+
+  <!-- ═══ SECTION 2: Total Cost + Interest ═══ -->
+  <div class="section-head">
+    <h2>Projected Total Cost Including Interest</h2>
+    <p>Sum of: 4-year tuition + living costs · in-school interest accrual (4 years) · 10-year standard repayment interest.
+       Private loan gap (COA minus federal cap) at 11% interest rate assumption.</p>
+  </div>
+
+  <div class="callout-grid">
+    <div class="callout-box">
+      <div class="lab">Avg Total — Current Law</div>
+      <div class="num">$660,624</div>
+      <div class="det">24-school mean · all federal loans</div>
+    </div>
+    <div class="callout-box mid">
+      <div class="lab">Avg Total — Under OBBB</div>
+      <div class="num">$698,827</div>
+      <div class="det">federal cap + private gap at 11%</div>
+    </div>
+    <div class="callout-box warn">
+      <div class="lab">Average Extra Lifetime Cost</div>
+      <div class="num">+$38,203</div>
+      <div class="det">+5.8% · driven by private loan premium</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Total Cost with Interest: Current Law vs. OBBB</h3>
+    <div class="sub">Grouped bars per school · principal + all interest over 10-year repayment · sorted by tuition</div>
+    <div class="controls">
+      <button class="pill active" id="btnSort1" onclick="setSort('tuition')">Sort by Tuition</button>
+      <button class="pill"        id="btnSort2" onclick="setSort('delta')">Sort by OBBB Impact</button>
+      <button class="pill"        id="btnSort3" onclick="setSort('school')">Alphabetical</button>
+    </div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-rect" style="background:var(--navy)"></div>Current law total cost</div>
+      <div class="legend-item"><div class="legend-rect" style="background:var(--red);opacity:.8"></div>OBBB total cost</div>
+    </div>
+    <div class="chart-container chart-tall"><canvas id="totalCostChart"></canvas></div>
+  </div>
+
+  <!-- ═══ SECTION 3: Monthly Payment ═══ -->
+  <div class="chart-card">
+    <h3>Monthly Loan Payment After Graduation</h3>
+    <div class="sub">10-year standard repayment · assumes immediate repayment after 4-year training · excludes residency/fellowship deferment</div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-rect" style="background:var(--navy)"></div>Current law monthly payment</div>
+      <div class="legend-item"><div class="legend-rect" style="background:var(--red);opacity:.8"></div>OBBB monthly payment</div>
+    </div>
+    <div class="chart-container chart-med"><canvas id="monthlyChart"></canvas></div>
+  </div>
+
+  <!-- ═══ UVA SPOTLIGHT ═══ -->
+  <div class="uva-spot">
+    <h3>● UVA School of Medicine — OBBB Impact Detail</h3>
+    <div class="uva-grid">
+      <div class="uva-metric"><div class="label">Annual Tuition + Fees</div><div class="val">$51,034</div></div>
+      <div class="uva-metric"><div class="label">Est. Annual COA</div><div class="val">$78,034</div></div>
+      <div class="uva-metric"><div class="label">Annual OBBB Gap</div><div class="val">$28,034</div></div>
+      <div class="uva-metric"><div class="label">4-Year Private Loans</div><div class="val">$149,136</div></div>
+      <div class="uva-metric"><div class="label">Total Cost — Current Law</div><div class="val">$578,678</div></div>
+      <div class="uva-metric"><div class="label">Total Cost — OBBB</div><div class="val">$604,989</div></div>
+      <div class="uva-metric"><div class="label">Extra Lifetime Cost</div><div class="val">+$26,310</div></div>
+      <div class="uva-metric"><div class="label">Monthly Payment Increase</div><div class="val">+$220/mo</div></div>
+    </div>
+    <div class="uva-narrative">
+      <strong>Key insight for UVA:</strong> Because UVA's annual cost of attendance (~$78K) exceeds the OBBB's $50K/year
+      federal cap by ~$28K each year, students must finance ~$149K of their medical education through private loans at
+      higher interest rates (est. 11% vs. 7.94% federal). Even though UVA is the most affordable program among the
+      six public schools in this analysis, OBBB still adds <strong>$26,310 in total lifetime borrowing costs</strong>
+      and raises the monthly payment by <strong>$220/month</strong>. During a 3–7 year residency, when most physicians
+      cannot afford standard repayment, additional interest capitalization would further widen this gap.
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 4: Sector breakdown ═══ -->
+  <div class="chart-card">
+    <h3>OBBB Extra Cost by Sector and Endowment Tercile</h3>
+    <div class="sub">Mean additional lifetime cost under OBBB vs. current law, grouped by sector and endowment size</div>
+    <div class="chart-container" style="height:280px"><canvas id="sectorChart"></canvas></div>
+  </div>
+
+  <!-- ═══ ASSUMPTIONS ═══ -->
+  <div class="assumptions">
+    <strong>Model assumptions:</strong>
+    Tuition + fees from AAMC "Tuition and Student Fees Report" (AY 2022-23, resident/in-state).
+    Living expenses: $27,000/year (AAMC standard estimate for misc. living, health insurance, supplies).
+    <strong>Current law rates:</strong> Graduate Unsubsidized Stafford = 7.94%; Graduate PLUS = 8.94% (AY 2025-26 rates);
+    weighted average based on Stafford ($20,500/yr) + PLUS (remaining COA).
+    <strong>OBBB:</strong> Federal loans capped at $50,000/year professional; aggregate $200,000 (all federal);
+    assumed $37,000 prior undergraduate federal debt (AAMC median), leaving $163,000 available for medical school.
+    Remaining COA above federal cap financed via private loans at 11.0% (industry average).
+    All loans assumed to accrue interest during 4 years of medical training (no payments made);
+    balance at graduation repaid over 10 years (standard plan). Does not account for residency deferment,
+    income-driven repayment, or institutional grant aid. Private loan availability and rates may vary.
+    <strong>Source:</strong> AAMC Tuition and Student Fees Report 2013–2026; AAMC Physician Education Debt Report;
+    Federal Student Aid (studentaid.gov); H.R. 1 / One Big Beautiful Bill Act (signed 2025).
+  </div>
+
+</div><!-- /main-wrapper -->
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════════
+// DATA — 24 schools, sorted by tuition (highest first)
+// ══════════════════════════════════════════════════════════════════
+const DATA = [
+  {school:"Columbia Vagelos SOM",    sector:"Pvt",tercile:"High",tuition:71425,coa_annual:98425,coa_4yr:393700,fed_4yr_curr:393700,bal_grad_curr:487480,monthly_curr:6105,total_cost_curr:732555,interest_curr:338855,fed_4yr_obbb:163000,priv_4yr_obbb:230700,bal_grad_obbb:497268,monthly_obbb:6510,total_cost_obbb:781199,interest_obbb:387499,gap_annual:48425,gap_4yr:230700,cost_delta:48643,pct_increase:6.6},
+  {school:"Tulane SOM",              sector:"Pvt",tercile:"Mid", tuition:71262,coa_annual:98262,coa_4yr:393048,fed_4yr_curr:393048,bal_grad_curr:486668,monthly_curr:6094,total_cost_curr:731325,interest_curr:338277,fed_4yr_obbb:163000,priv_4yr_obbb:230048,bal_grad_obbb:496416,monthly_obbb:6498,total_cost_obbb:779790,interest_obbb:386742,gap_annual:48262,gap_4yr:230048,cost_delta:48465,pct_increase:6.6},
+  {school:"Case Western SOM",        sector:"Pvt",tercile:"Mid", tuition:70074,coa_annual:97074,coa_4yr:388296,fed_4yr_curr:388296,bal_grad_curr:480755,monthly_curr:6020,total_cost_curr:722360,interest_curr:334064,fed_4yr_obbb:163000,priv_4yr_obbb:225296,bal_grad_obbb:490205,monthly_obbb:6413,total_cost_obbb:769524,interest_obbb:381228,gap_annual:47074,gap_4yr:225296,cost_delta:47164,pct_increase:6.5},
+  {school:"Boston University SOM",   sector:"Pvt",tercile:"Mid", tuition:69528,coa_annual:96528,coa_4yr:386112,fed_4yr_curr:386112,bal_grad_curr:478037,monthly_curr:5985,total_cost_curr:718240,interest_curr:332128,fed_4yr_obbb:163000,priv_4yr_obbb:223112,bal_grad_obbb:487351,monthly_obbb:6373,total_cost_obbb:764806,interest_obbb:378694,gap_annual:46528,gap_4yr:223112,cost_delta:46566,pct_increase:6.5},
+  {school:"Northwestern Feinberg SOM",sector:"Pvt",tercile:"High",tuition:69442,coa_annual:96442,coa_4yr:385768,fed_4yr_curr:385768,bal_grad_curr:477609,monthly_curr:5980,total_cost_curr:717591,interest_curr:331823,fed_4yr_obbb:163000,priv_4yr_obbb:222768,bal_grad_obbb:486901,monthly_obbb:6367,total_cost_obbb:764062,interest_obbb:378294,gap_annual:46442,gap_4yr:222768,cost_delta:46472,pct_increase:6.5},
+  {school:"U Rochester SOM",         sector:"Pvt",tercile:"Mid", tuition:69363,coa_annual:96363,coa_4yr:385452,fed_4yr_curr:385452,bal_grad_curr:477216,monthly_curr:5975,total_cost_curr:716995,interest_curr:331543,fed_4yr_obbb:163000,priv_4yr_obbb:222452,bal_grad_obbb:486488,monthly_obbb:6361,total_cost_obbb:763380,interest_obbb:377928,gap_annual:46363,gap_4yr:222452,cost_delta:46385,pct_increase:6.5},
+  {school:"Penn Perelman SOM",        sector:"Pvt",tercile:"High",tuition:69263,coa_annual:96263,coa_4yr:385052,fed_4yr_curr:385052,bal_grad_curr:476718,monthly_curr:5969,total_cost_curr:716240,interest_curr:331188,fed_4yr_obbb:163000,priv_4yr_obbb:222052,bal_grad_obbb:485965,monthly_obbb:6354,total_cost_obbb:762516,interest_obbb:377464,gap_annual:46263,gap_4yr:222052,cost_delta:46276,pct_increase:6.5},
+  {school:"Georgetown SOM",           sector:"Pvt",tercile:"Mid", tuition:69005,coa_annual:96005,coa_4yr:384020,fed_4yr_curr:384020,bal_grad_curr:475434,monthly_curr:5952,total_cost_curr:714293,interest_curr:330273,fed_4yr_obbb:163000,priv_4yr_obbb:221020,bal_grad_obbb:484617,monthly_obbb:6336,total_cost_obbb:760286,interest_obbb:376266,gap_annual:46005,gap_4yr:221020,cost_delta:45993,pct_increase:6.4},
+  {school:"Weill Cornell Medicine",   sector:"Pvt",tercile:"Mid", tuition:68892,coa_annual:95892,coa_4yr:383568,fed_4yr_curr:383568,bal_grad_curr:474871,monthly_curr:5945,total_cost_curr:713440,interest_curr:329872,fed_4yr_obbb:163000,priv_4yr_obbb:220568,bal_grad_obbb:484026,monthly_obbb:6328,total_cost_obbb:759310,interest_obbb:375742,gap_annual:45892,gap_4yr:220568,cost_delta:45869,pct_increase:6.4},
+  {school:"Yale School of Medicine",  sector:"Pvt",tercile:"High",tuition:68697,coa_annual:95697,coa_4yr:382788,fed_4yr_curr:382788,bal_grad_curr:473901,monthly_curr:5933,total_cost_curr:711969,interest_curr:329181,fed_4yr_obbb:163000,priv_4yr_obbb:219788,bal_grad_obbb:483006,monthly_obbb:6314,total_cost_obbb:757624,interest_obbb:374836,gap_annual:45697,gap_4yr:219788,cost_delta:45656,pct_increase:6.4},
+  {school:"Brown Warren Alpert SOM",  sector:"Pvt",tercile:"High",tuition:68544,coa_annual:95544,coa_4yr:382176,fed_4yr_curr:382176,bal_grad_curr:473139,monthly_curr:5923,total_cost_curr:710814,interest_curr:328638,fed_4yr_obbb:163000,priv_4yr_obbb:219176,bal_grad_obbb:482206,monthly_obbb:6303,total_cost_obbb:756302,interest_obbb:374126,gap_annual:45544,gap_4yr:219176,cost_delta:45488,pct_increase:6.4},
+  {school:"Duke School of Medicine",  sector:"Pvt",tercile:"High",tuition:68440,coa_annual:95440,coa_4yr:381760,fed_4yr_curr:381760,bal_grad_curr:472622,monthly_curr:5917,total_cost_curr:710029,interest_curr:328269,fed_4yr_obbb:163000,priv_4yr_obbb:218760,bal_grad_obbb:481663,monthly_obbb:6295,total_cost_obbb:755404,interest_obbb:373644,gap_annual:45440,gap_4yr:218760,cost_delta:45374,pct_increase:6.4},
+  {school:"Harvard Medical School",   sector:"Pvt",tercile:"High",tuition:68123,coa_annual:95123,coa_4yr:380492,fed_4yr_curr:380492,bal_grad_curr:471044,monthly_curr:5897,total_cost_curr:707637,interest_curr:327145,fed_4yr_obbb:163000,priv_4yr_obbb:217492,bal_grad_obbb:480006,monthly_obbb:6272,total_cost_obbb:752664,interest_obbb:372172,gap_annual:45123,gap_4yr:217492,cost_delta:45027,pct_increase:6.4},
+  {school:"WashU School of Medicine", sector:"Pvt",tercile:"High",tuition:67476,coa_annual:94476,coa_4yr:377904,fed_4yr_curr:377904,bal_grad_curr:467823,monthly_curr:5856,total_cost_curr:702754,interest_curr:324850,fed_4yr_obbb:163000,priv_4yr_obbb:214904,bal_grad_obbb:476623,monthly_obbb:6226,total_cost_obbb:747073,interest_obbb:369169,gap_annual:44476,gap_4yr:214904,cost_delta:44319,pct_increase:6.3},
+  {school:"Vanderbilt SOM",           sector:"Pvt",tercile:"High",tuition:66509,coa_annual:93509,coa_4yr:374036,fed_4yr_curr:374036,bal_grad_curr:463010,monthly_curr:5795,total_cost_curr:695457,interest_curr:321421,fed_4yr_obbb:163000,priv_4yr_obbb:211036,bal_grad_obbb:471568,monthly_obbb:6156,total_cost_obbb:738717,interest_obbb:364681,gap_annual:43509,gap_4yr:211036,cost_delta:43260,pct_increase:6.2},
+  {school:"Stanford School of Med.",  sector:"Pvt",tercile:"High",tuition:64901,coa_annual:91901,coa_4yr:367604,fed_4yr_curr:367604,bal_grad_curr:455006,monthly_curr:5694,total_cost_curr:683322,interest_curr:315718,fed_4yr_obbb:163000,priv_4yr_obbb:204604,bal_grad_obbb:463162,monthly_obbb:6040,total_cost_obbb:724821,interest_obbb:357217,gap_annual:41901,gap_4yr:204604,cost_delta:41499,pct_increase:6.1},
+  {school:"U Pittsburgh SOM",         sector:"Pub",tercile:"Mid", tuition:62416,coa_annual:89416,coa_4yr:357664,fed_4yr_curr:357664,bal_grad_curr:442637,monthly_curr:5538,total_cost_curr:664570,interest_curr:306906,fed_4yr_obbb:163000,priv_4yr_obbb:194664,bal_grad_obbb:450171,monthly_obbb:5861,total_cost_obbb:703347,interest_obbb:345683,gap_annual:39416,gap_4yr:194664,cost_delta:38777,pct_increase:5.8},
+  {school:"Johns Hopkins SOM",        sector:"Pvt",tercile:"High",tuition:61696,coa_annual:88696,coa_4yr:354784,fed_4yr_curr:354784,bal_grad_curr:439053,monthly_curr:5493,total_cost_curr:659136,interest_curr:304352,fed_4yr_obbb:163000,priv_4yr_obbb:191784,bal_grad_obbb:446407,monthly_obbb:5809,total_cost_obbb:697125,interest_obbb:342341,gap_annual:38696,gap_4yr:191784,cost_delta:37989,pct_increase:5.8},
+  {school:"Emory School of Medicine", sector:"Pvt",tercile:"High",tuition:54270,coa_annual:81270,coa_4yr:325080,fed_4yr_curr:325080,bal_grad_curr:402090,monthly_curr:5026,total_cost_curr:603098,interest_curr:278018,fed_4yr_obbb:163000,priv_4yr_obbb:162080,bal_grad_obbb:407585,monthly_obbb:5275,total_cost_obbb:632953,interest_obbb:307873,gap_annual:31270,gap_4yr:162080,cost_delta:29855,pct_increase:5.0},
+  {school:"UVA School of Medicine",   sector:"Pub",tercile:"High",tuition:51034,coa_annual:78034,coa_4yr:312136,fed_4yr_curr:312136,bal_grad_curr:385983,monthly_curr:4822,total_cost_curr:578678,interest_curr:266542,fed_4yr_obbb:163000,priv_4yr_obbb:149136,bal_grad_obbb:390668,monthly_obbb:5042,total_cost_obbb:604989,interest_obbb:292853,gap_annual:28034,gap_4yr:149136,cost_delta:26310,pct_increase:4.5},
+  {school:"U Michigan Medical School",sector:"Pub",tercile:"High",tuition:50763,coa_annual:77763,coa_4yr:311052,fed_4yr_curr:311052,bal_grad_curr:384634,monthly_curr:4805,total_cost_curr:576633,interest_curr:265581,fed_4yr_obbb:163000,priv_4yr_obbb:148052,bal_grad_obbb:389251,monthly_obbb:5022,total_cost_obbb:602647,interest_obbb:291595,gap_annual:27763,gap_4yr:148052,cost_delta:26014,pct_increase:4.5},
+  {school:"UCSF School of Medicine",  sector:"Pub",tercile:"Mid", tuition:38521,coa_annual:65521,coa_4yr:262084,fed_4yr_curr:262084,bal_grad_curr:323700,monthly_curr:4035,total_cost_curr:484255,interest_curr:222171,fed_4yr_obbb:163000,priv_4yr_obbb:99084,bal_grad_obbb:325252,monthly_obbb:4140,total_cost_obbb:496857,interest_obbb:234773,gap_annual:15521,gap_4yr:99084,cost_delta:12601,pct_increase:2.6},
+  {school:"UNC School of Medicine",   sector:"Pub",tercile:"Mid", tuition:34706,coa_annual:61706,coa_4yr:246824,fed_4yr_curr:246824,bal_grad_curr:304711,monthly_curr:3796,total_cost_curr:455469,interest_curr:208645,fed_4yr_obbb:163000,priv_4yr_obbb:83824,bal_grad_obbb:305308,monthly_obbb:3866,total_cost_obbb:463889,interest_obbb:217065,gap_annual:11706,gap_4yr:83824,cost_delta:8421,pct_increase:1.8},
+  {school:"Ohio State SOM",           sector:"Pub",tercile:"High",tuition:31081,coa_annual:58081,coa_4yr:232324,fed_4yr_curr:232324,bal_grad_curr:286668,monthly_curr:3568,total_cost_curr:428116,interest_curr:195792,fed_4yr_obbb:163000,priv_4yr_obbb:69324,bal_grad_obbb:286357,monthly_obbb:3605,total_cost_obbb:432564,interest_obbb:200240,gap_annual:8081,gap_4yr:69324,cost_delta:4448,pct_increase:1.0},
+];
+
+const C = {
+  pub:   '#1B3A6B',
+  pvt:   '#A8192E',
+  uva:   '#E8750A',
+  curr:  '#1B3A6B',
+  obbb:  'rgba(168,25,46,0.8)',
+  gap:   'rgba(168,25,46,0.6)',
+};
+
+function fmt$(v){ return '$'+Math.round(v).toLocaleString(); }
+function fmtK(v){ return '$'+Math.round(v/1000)+'K'; }
+function barColor(d){
+  if(d.school==="UVA School of Medicine") return C.uva;
+  return d.sector==="Pub" ? C.pub : C.pvt;
+}
+
+// ── SORT STATE ──────────────────────────────────────────────────
+let sortMode = 'tuition';  // tuition | delta | school
+let gapChartInst = null, totalCostChartInst = null, monthlyChartInst = null;
+
+function getSorted(){
+  let arr = [...DATA];
+  if(sortMode === 'tuition') arr.sort((a,b)=>b.tuition-a.tuition);
+  if(sortMode === 'delta')   arr.sort((a,b)=>b.cost_delta-a.cost_delta);
+  if(sortMode === 'school')  arr.sort((a,b)=>a.school.localeCompare(b.school));
+  return arr;
+}
+
+function setSort(mode){
+  sortMode = mode;
+  ['btnSort1','btnSort2','btnSort3'].forEach(id=>{
+    document.getElementById(id).classList.remove('active');
+  });
+  const map = {tuition:'btnSort1', delta:'btnSort2', school:'btnSort3'};
+  document.getElementById(map[mode]).classList.add('active');
+  buildTotalCost();
+  buildMonthly();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 1: Annual Gap
+// ══════════════════════════════════════════════════════════════════
+function buildGap(){
+  const d = [...DATA];  // sorted by tuition already
+  const labels = d.map(s=>s.school.replace(' School of Medicine','').replace(' SOM',''));
+  const coaVals = d.map(s=>s.coa_annual);
+  const colors  = d.map(s=>s.school==="UVA School of Medicine" ? C.uva :
+                            s.sector==="Pub" ? 'rgba(27,58,107,0.8)' : 'rgba(168,25,46,0.8)');
+  const ctx = document.getElementById('gapChart').getContext('2d');
+  gapChartInst = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'Annual COA', data:coaVals, backgroundColor:colors, borderRadius:3, barPercentage:0.7 },
+      ]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ callbacks:{
+          label: c => {
+            const s = DATA.find(x=>x.school.includes(c.label.split(',')[0])) || d[c.dataIndex];
+            return [
+              ` Annual COA: ${fmt$(s.coa_annual)}`,
+              ` Tuition+Fees: ${fmt$(s.tuition)}`,
+              ` OBBB annual gap: ${fmt$(s.gap_annual)}`,
+              ` OBBB 4-year private loans: ${fmt$(s.gap_4yr)}`,
+            ];
+          }
+        }},
+        annotation: undefined
+      },
+      scales:{
+        x:{
+          min:0, max:115000,
+          ticks:{ callback:v=>fmtK(v), font:{size:10} },
+          grid:{ color:'#E8ECF0' },
+          title:{ display:true, text:'Annual Cost of Attendance ($)', font:{size:11} }
+        },
+        y:{ ticks:{ font:{size:10} }, grid:{ display:false } }
+      }
+    },
+    plugins:[{
+      id:'capLine',
+      afterDraw(chart){
+        const {ctx, chartArea, scales:{x}} = chart;
+        const xPx = x.getPixelForValue(50000);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([6,4]);
+        ctx.strokeStyle = '#E8750A';
+        ctx.lineWidth   = 2;
+        ctx.moveTo(xPx, chartArea.top);
+        ctx.lineTo(xPx, chartArea.bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#E8750A';
+        ctx.font = 'bold 11px Segoe UI';
+        ctx.fillText('$50K annual cap', xPx+4, chartArea.top+14);
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 2: Total Cost Comparison
+// ══════════════════════════════════════════════════════════════════
+function buildTotalCost(){
+  if(totalCostChartInst){ totalCostChartInst.destroy(); }
+  const d = getSorted();
+  const labels = d.map(s=>s.school.replace(' School of Medicine','').replace(' SOM',''));
+  const ctx = document.getElementById('totalCostChart').getContext('2d');
+  totalCostChartInst = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'Current Law (total cost)',
+          data: d.map(s=>s.total_cost_curr),
+          backgroundColor: d.map(s=>s.school==="UVA School of Medicine" ? C.uva : s.sector==="Pub" ? 'rgba(27,58,107,0.85)' : 'rgba(168,25,46,0.85)'),
+          borderRadius:3, barPercentage:0.4, categoryPercentage:0.8,
+        },
+        { label:'OBBB (total cost)',
+          data: d.map(s=>s.total_cost_obbb),
+          backgroundColor: d.map(s=>s.school==="UVA School of Medicine" ? 'rgba(232,117,10,0.55)' : s.sector==="Pub" ? 'rgba(27,58,107,0.4)' : 'rgba(168,25,46,0.45)'),
+          borderWidth:1.5,
+          borderColor: d.map(s=>s.school==="UVA School of Medicine" ? C.uva : s.sector==="Pub" ? C.pub : C.pvt),
+          borderRadius:3, barPercentage:0.4, categoryPercentage:0.8,
+        },
+      ]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'top', labels:{font:{size:11},padding:14} },
+        tooltip:{ callbacks:{
+          label: c => {
+            const s = d[c.dataIndex];
+            if(c.datasetIndex===0) return [` Current law: ${fmt$(s.total_cost_curr)}`, ` Monthly: ${fmt$(s.monthly_curr)}/mo`];
+            return [` OBBB total: ${fmt$(s.total_cost_obbb)}`, ` Monthly: ${fmt$(s.monthly_obbb)}/mo`, ` Extra cost: +${fmt$(s.cost_delta)} (+${s.pct_increase}%)`];
+          }
+        }}
+      },
+      scales:{
+        x:{ min:300000, ticks:{callback:v=>fmtK(v),font:{size:10}}, grid:{color:'#E8ECF0'},
+            title:{display:true,text:'Total Cost Including Interest ($)',font:{size:11}} },
+        y:{ ticks:{font:{size:10}}, grid:{display:false} }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 3: Monthly Payment
+// ══════════════════════════════════════════════════════════════════
+function buildMonthly(){
+  if(monthlyChartInst){ monthlyChartInst.destroy(); }
+  const d = getSorted();
+  const labels = d.map(s=>s.school.replace(' School of Medicine','').replace(' SOM',''));
+  const ctx = document.getElementById('monthlyChart').getContext('2d');
+  monthlyChartInst = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'Current Law (monthly payment)',
+          data: d.map(s=>s.monthly_curr),
+          backgroundColor: d.map(s=>s.school==="UVA School of Medicine" ? C.uva : s.sector==="Pub" ? 'rgba(27,58,107,0.85)' : 'rgba(168,25,46,0.85)'),
+          borderRadius:3, barPercentage:0.4, categoryPercentage:0.8,
+        },
+        { label:'OBBB (monthly payment)',
+          data: d.map(s=>s.monthly_obbb),
+          backgroundColor: d.map(s=>s.school==="UVA School of Medicine" ? 'rgba(232,117,10,0.45)' : s.sector==="Pub" ? 'rgba(27,58,107,0.35)' : 'rgba(168,25,46,0.40)'),
+          borderWidth:1.5,
+          borderColor: d.map(s=>s.school==="UVA School of Medicine" ? C.uva : s.sector==="Pub" ? C.pub : C.pvt),
+          borderRadius:3, barPercentage:0.4, categoryPercentage:0.8,
+        },
+      ]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'top', labels:{font:{size:11},padding:14} },
+        tooltip:{ callbacks:{
+          label: c => {
+            const s = d[c.dataIndex];
+            if(c.datasetIndex===0) return ` Current: ${fmt$(s.monthly_curr)}/month`;
+            return [` OBBB: ${fmt$(s.monthly_obbb)}/month`, ` Increase: +${fmt$(s.monthly_obbb-s.monthly_curr)}/mo`];
+          }
+        }}
+      },
+      scales:{
+        x:{ min:2000, ticks:{callback:v=>'$'+v.toLocaleString(),font:{size:10}}, grid:{color:'#E8ECF0'},
+            title:{display:true,text:'Monthly Payment ($)',font:{size:11}} },
+        y:{ ticks:{font:{size:10}}, grid:{display:false} }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHART 4: Sector × Tercile
+// ══════════════════════════════════════════════════════════════════
+function buildSector(){
+  // Compute means
+  const groups = {
+    'Pub × High': DATA.filter(d=>d.sector==='Pub'&&d.tercile==='High'),
+    'Pub × Mid':  DATA.filter(d=>d.sector==='Pub'&&d.tercile==='Mid'),
+    'Pvt × High': DATA.filter(d=>d.sector==='Pvt'&&d.tercile==='High'),
+    'Pvt × Mid':  DATA.filter(d=>d.sector==='Pvt'&&d.tercile==='Mid'),
+  };
+  const labels = Object.keys(groups);
+  const mean = (arr,k) => arr.reduce((s,d)=>s+d[k],0)/arr.length;
+  const ctx = document.getElementById('sectorChart').getContext('2d');
+  new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'Extra Lifetime Cost (OBBB)', data:labels.map(l=>mean(groups[l],'cost_delta')),
+          backgroundColor:['rgba(27,58,107,0.8)','rgba(27,58,107,0.5)','rgba(168,25,46,0.8)','rgba(168,25,46,0.5)'],
+          borderRadius:5, barPercentage:0.55 },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ callbacks:{ label:c=>` Mean extra cost: ${fmt$(c.raw)} (+${(c.raw/[660624,530372,726244,750671][c.dataIndex]*100).toFixed(1)}%)` } }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{size:12}} },
+        y:{ grid:{color:'#E8ECF0'}, ticks:{callback:v=>fmt$(v),font:{size:10}},
+            title:{display:true,text:'Mean Extra Lifetime Cost ($)',font:{size:11}} }
+      }
+    }
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+buildGap();
+buildTotalCost();
+buildMonthly();
+buildSector();
+</script>
+</body>
+</html>
