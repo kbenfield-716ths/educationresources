@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Endowment & Tuition Research Hub</title>
+<style>
+  :root {
+    --navy:   #1a2b4a;
+    --blue:   #2563eb;
+    --sky:    #dbeafe;
+    --teal:   #0891b2;
+    --gold:   #b45309;
+    --red:    #dc2626;
+    --green:  #16a34a;
+    --bg:     #f8fafc;
+    --card:   #ffffff;
+    --border: #e2e8f0;
+    --sub:    #64748b;
+    --text:   #1e293b;
+    --pill-undergrad: #e0f2fe;
+    --pill-undergrad-text: #0369a1;
+    --pill-med: #dcfce7;
+    --pill-med-text: #166534;
+    --pill-policy: #fef3c7;
+    --pill-policy-text: #92400e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--navy);
+    padding: 40px 24px 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      135deg,
+      transparent,
+      transparent 40px,
+      rgba(255,255,255,0.015) 40px,
+      rgba(255,255,255,0.015) 80px
+    );
+  }
+  .site-header h1 {
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    position: relative;
+  }
+  .site-header .subtitle {
+    margin-top: 10px;
+    font-size: 0.95rem;
+    color: #94a3b8;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+    position: relative;
+  }
+  .header-meta {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .header-meta span {
+    font-size: 0.75rem;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .header-meta span::before {
+    content: '▸';
+    color: #60a5fa;
+  }
+
+  /* ── Key findings bar ── */
+  .findings-bar {
+    background: #0f172a;
+    border-bottom: 2px solid var(--blue);
+    padding: 14px 24px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .findings-bar::-webkit-scrollbar { display: none; }
+  .finding-item {
+    flex: 0 0 auto;
+    padding: 0 28px;
+    border-right: 1px solid #1e293b;
+    text-align: center;
+  }
+  .finding-item:first-child { padding-left: 0; }
+  .finding-item:last-child { border-right: none; }
+  .finding-item .f-val {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #60a5fa;
+    line-height: 1.2;
+  }
+  .finding-item .f-label {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 3px;
+    white-space: nowrap;
+  }
+  .finding-item .f-val.red  { color: #f87171; }
+  .finding-item .f-val.green { color: #4ade80; }
+
+  /* ── Main layout ── */
+  .main {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    margin-top: 44px;
+  }
+  .section-label:first-child { margin-top: 0; }
+  .section-label h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .section-label .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Cards ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .cards.single { grid-template-columns: 1fr; }
+  .cards.two    { grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+  }
+  .card:hover {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+  }
+
+  .card-accent {
+    height: 5px;
+    flex-shrink: 0;
+  }
+  .accent-undergrad { background: linear-gradient(90deg, #0369a1, #0891b2); }
+  .accent-med       { background: linear-gradient(90deg, #166534, #16a34a); }
+  .accent-policy    { background: linear-gradient(90deg, #92400e, #d97706); }
+
+  .card-body {
+    padding: 22px 24px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    width: fit-content;
+  }
+  .tag-undergrad { background: var(--pill-undergrad); color: var(--pill-undergrad-text); }
+  .tag-med       { background: var(--pill-med);       color: var(--pill-med-text); }
+  .tag-policy    { background: var(--pill-policy);    color: var(--pill-policy-text); }
+
+  .card-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .card-desc {
+    font-size: 0.875rem;
+    color: var(--sub);
+    line-height: 1.65;
+    flex: 1;
+  }
+
+  .card-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .card-stat {
+    text-align: center;
+  }
+  .card-stat .cs-val {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .card-stat .cs-val.up   { color: var(--red); }
+  .card-stat .cs-val.down { color: var(--green); }
+  .card-stat .cs-label {
+    font-size: 0.68rem;
+    color: var(--sub);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--blue);
+    text-decoration: none;
+  }
+  .card-cta svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.15s;
+  }
+  .card:hover .card-cta svg {
+    transform: translateX(3px);
+  }
+
+  /* ── Featured card (OBBB) ── */
+  .card.featured {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .card.featured .card-accent {
+    width: 5px;
+    height: auto;
+  }
+  .card.featured .card-body {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .featured-left {
+    flex: 1;
+    min-width: 260px;
+  }
+  .featured-right {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 0;
+  }
+  .featured-metric {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    min-width: 150px;
+    text-align: center;
+  }
+  .featured-metric .fm-val {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--red);
+    line-height: 1.1;
+  }
+  .featured-metric .fm-label {
+    font-size: 0.68rem;
+    color: var(--sub);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+  .featured-metric.neutral .fm-val { color: var(--navy); }
+
+  /* ── Methodology note ── */
+  .method-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-top: 10px;
+  }
+  .method-box h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+  }
+  .method-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px 24px;
+  }
+  .method-item {
+    font-size: 0.81rem;
+    color: var(--sub);
+    line-height: 1.5;
+    padding-left: 12px;
+    border-left: 2px solid var(--border);
+  }
+  .method-item strong {
+    color: var(--navy);
+    font-weight: 600;
+  }
+
+  /* ── Footer ── */
+  .site-footer {
+    background: var(--navy);
+    padding: 28px 24px;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.8;
+  }
+  .site-footer a { color: #94a3b8; text-decoration: none; }
+  .site-footer a:hover { color: #e2e8f0; }
+
+  @media (max-width: 640px) {
+    .card.featured { flex-direction: column; }
+    .card.featured .card-accent { width: auto; height: 5px; }
+    .card.featured .card-body { flex-direction: column; gap: 20px; }
+    .featured-right { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .findings-bar { justify-content: flex-start; }
+    .cards.two { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="site-header">
+  <h1>Endowment &amp; Tuition Research Hub</h1>
+  <p class="subtitle">
+    An interactive research study examining the relationship between university endowment wealth and tuition growth rates — for both undergraduate programs and U.S. MD-granting medical schools.
+  </p>
+  <div class="header-meta">
+    <span>25 Medical Schools Analyzed</span>
+    <span>4 Interactive Visualizations</span>
+    <span>AY 2013–14 through AY 2022–23</span>
+    <span>UVA School of Medicine Spotlighted</span>
+  </div>
+</header>
+
+<!-- ── Key findings ── -->
+<div class="findings-bar">
+  <div class="finding-item">
+    <span class="f-val">β = −0.014</span>
+    <span class="f-label">Endowment→Tuition Growth (Med)</span>
+  </div>
+  <div class="finding-item">
+    <span class="f-val">p = 0.961</span>
+    <span class="f-label">OLS p-value (not significant)</span>
+  </div>
+  <div class="finding-item">
+    <span class="f-val">+1.07%</span>
+    <span class="f-label">UVA Nominal Tuition Growth/yr</span>
+  </div>
+  <div class="finding-item">
+    <span class="f-val green">−1.84%</span>
+    <span class="f-label">UVA Real Tuition Growth/yr</span>
+  </div>
+  <div class="finding-item">
+    <span class="f-val red">+$38,203</span>
+    <span class="f-label">Avg Extra Cost — OBBB (Med)</span>
+  </div>
+  <div class="finding-item">
+    <span class="f-val red">+$26,310</span>
+    <span class="f-label">UVA Extra Cost — OBBB</span>
+  </div>
+</div>
+
+<!-- ── Main content ── -->
+<main class="main">
+
+  <!-- UNDERGRADUATE -->
+  <div class="section-label">
+    <h2>Undergraduate Analysis</h2>
+    <div class="line"></div>
+  </div>
+
+  <div class="cards two">
+
+    <a class="card" href="endowment_tuition_analysis.html">
+      <div class="card-accent accent-undergrad"></div>
+      <div class="card-body">
+        <span class="card-tag tag-undergrad">Undergraduate · Panel Report</span>
+        <div class="card-title">Endowment &amp; Tuition Inflation — Panel Analysis Report</div>
+        <p class="card-desc">
+          A comprehensive panel regression analysis covering hundreds of U.S. colleges and universities. Tests whether richer endowments translate into slower tuition growth, using fixed effects and OLS across multiple years and institution types.
+        </p>
+        <div class="card-stats">
+          <div class="card-stat">
+            <span class="cs-val">400+</span>
+            <span class="cs-label">Institutions</span>
+          </div>
+          <div class="card-stat">
+            <span class="cs-val">OLS / FE</span>
+            <span class="cs-label">Methods</span>
+          </div>
+          <div class="card-stat">
+            <span class="cs-val">Pub &amp; Pvt</span>
+            <span class="cs-label">Sectors</span>
+          </div>
+        </div>
+        <span class="card-cta">
+          Open report
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="card" href="tuition_tertile_viz.html">
+      <div class="card-accent accent-undergrad"></div>
+      <div class="card-body">
+        <span class="card-tag tag-undergrad">Undergraduate · Interactive</span>
+        <div class="card-title">Tuition Change by Endowment Tertile</div>
+        <p class="card-desc">
+          Interactive charts breaking down annual tuition growth rates by endowment wealth tercile (low, mid, high) for undergraduate institutions. Includes CPI-adjusted real rates, sector comparisons, and a scatter plot of endowment size versus tuition growth.
+        </p>
+        <div class="card-stats">
+          <div class="card-stat">
+            <span class="cs-val">3</span>
+            <span class="cs-label">Endowment Terciles</span>
+          </div>
+          <div class="card-stat">
+            <span class="cs-val">Real &amp; Nominal</span>
+            <span class="cs-label">Rate Views</span>
+          </div>
+          <div class="card-stat">
+            <span class="cs-val">Interactive</span>
+            <span class="cs-label">Charts</span>
+          </div>
+        </div>
+        <span class="card-cta">
+          Open visualization
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- MEDICAL SCHOOL -->
+  <div class="section-label">
+    <h2>Medical School Analysis</h2>
+    <div class="line"></div>
+  </div>
+
+  <div class="cards two">
+
+    <a class="card" href="med_school_viz.html">
+      <div class="card-accent accent-med"></div>
+      <div class="card-body">
+        <span class="card-tag tag-med">Medical School · Interactive</span>
+        <div class="card-title">Medical School Tuition &amp; Endowment Analysis</div>
+        <p class="card-desc">
+          Main visualization for 25 U.S. MD-granting programs. Scatter plot of mean annual tuition growth vs. endowment size, trend lines for public and private schools, UVA spotlight section, and a full OLS regression with confidence intervals. Covers AY 2013–14 through AY 2022–23 (9 valid YoY observations per school).
+        </p>
+        <div class="card-stats">
+          <div class="card-stat">
+            <span class="cs-val">25</span>
+            <span class="cs-label">MD Schools</span>
+          </div>
+          <div class="card-stat">
+            <span class="cs-val">9-Year</span>
+            <span class="cs-label">YoY Means</span>
+          </div>
+          <div class="card-stat">
+            <span class="cs-val">β = −0.014</span>
+            <span class="cs-label">OLS Slope</span>
+          </div>
+        </div>
+        <span class="card-cta">
+          Open visualization
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="card" href="med_tuition_tertile_viz.html">
+      <div class="card-accent accent-med"></div>
+      <div class="card-body">
+        <span class="card-tag tag-med">Medical School · Interactive</span>
+        <div class="card-title">Med School Tuition Change by Endowment Tertile</div>
+        <p class="card-desc">
+          Deep-dive into tuition growth trends grouped by endowment tercile (High &gt;$6B, Mid $1–6B, Low &lt;$1B) and by sector (Public vs. Private). Includes year-by-year bar charts, real vs. nominal toggle, UVA placement in context, and a NIH funding tier breakdown across 216 valid observations.
+        </p>
+        <div class="card-stats">
+          <div class="card-stat">
+            <span class="cs-val">216</span>
+            <span class="cs-label">Observations</span>
+          </div>
+          <div class="card-stat">
+            <span class="cs-val">NIH Tiers</span>
+            <span class="cs-label">H / M / L</span>
+          </div>
+          <div class="card-stat">
+            <span class="cs-val">UVA Focus</span>
+            <span class="cs-label">Spotlight</span>
+          </div>
+        </div>
+        <span class="card-cta">
+          Open visualization
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- POLICY ANALYSIS -->
+  <div class="section-label">
+    <h2>Policy Impact Analysis</h2>
+    <div class="line"></div>
+  </div>
+
+  <div class="cards">
+
+    <a class="card featured" href="obbb_med_impact.html">
+      <div class="card-accent accent-policy" style="width:5px;height:auto;flex-shrink:0;"></div>
+      <div class="card-body">
+        <div class="featured-left">
+          <span class="card-tag tag-policy">Policy · OBBB · Medical Students</span>
+          <div class="card-title">One Big Beautiful Bill — Impact on Medical School Financing</div>
+          <p class="card-desc">
+            Quantifies the total borrowing cost impact of the One Big Beautiful Bill (H.R. 1) on medical students at 24 U.S. MD programs. The OBBB eliminates Graduate PLUS loans and caps professional student federal borrowing at $50,000/year ($200K aggregate). Students exceeding these caps must finance remaining costs with higher-rate private loans. Analysis models 4-year in-school interest accrual plus a 10-year standard repayment to compare total cost-with-interest under current law versus OBBB.
+          </p>
+          <p class="card-desc" style="margin-top:10px;">
+            Charts include: annual federal funding gap per school, total projected cost comparison (current law vs. OBBB), monthly payment comparison, and a sector × tercile breakdown of mean additional cost.
+          </p>
+          <span class="card-cta" style="margin-top:20px;">
+            Open OBBB analysis
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          </span>
+        </div>
+        <div class="featured-right">
+          <div class="featured-metric">
+            <span class="fm-val">$661K</span>
+            <span class="fm-label">Avg Cost — Current Law</span>
+          </div>
+          <div class="featured-metric">
+            <span class="fm-val">$699K</span>
+            <span class="fm-label">Avg Cost — Under OBBB</span>
+          </div>
+          <div class="featured-metric">
+            <span class="fm-val">+$38,203</span>
+            <span class="fm-label">Avg Extra (all 24 schools)</span>
+          </div>
+          <div class="featured-metric neutral">
+            <span class="fm-val">+$26,310</span>
+            <span class="fm-label">UVA Extra Cost (+4.5%)</span>
+          </div>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- METHODOLOGY -->
+  <div class="section-label" style="margin-top:48px;">
+    <h2>Data &amp; Methodology</h2>
+    <div class="line"></div>
+  </div>
+
+  <div class="method-box">
+    <h3>Sources &amp; Methods</h3>
+    <div class="method-grid">
+      <div class="method-item">
+        <strong>Tuition (Medical)</strong><br>
+        AAMC Tuition &amp; Student Fees Reports — extracted directly from official Excel files via custom parser. All 25 MD programs, AY 2013–14 through AY 2022–23. Resident/in-state rates for public schools.
+      </div>
+      <div class="method-item">
+        <strong>Endowment Data</strong><br>
+        NACUBO-Commonfund Study of Endowments (FY2022 anchor). Index-adjusted using NACUBO-reported annual returns to produce school-level estimates for FY2014–FY2023.
+      </div>
+      <div class="method-item">
+        <strong>NIH Funding Tiers</strong><br>
+        Blue Ridge Institute for Medical Research (BRIMR) annual rankings. High &gt;$400M/yr, Mid $150–400M/yr, Low &lt;$150M/yr (FY2018–2022 average).
+      </div>
+      <div class="method-item">
+        <strong>CPI Adjustment</strong><br>
+        BLS CPI-U national annual rates. Real tuition growth = nominal annual pct change minus CPI-U.
+      </div>
+      <div class="method-item">
+        <strong>OBBB Loan Model</strong><br>
+        $50K/yr annual cap, $200K aggregate (professional students). Prior undergrad debt: $37K (AAMC median). Federal rate 7.94%; Grad PLUS 8.94% (current); private gap 11%. 4-yr in-school accrual + 10-yr standard repayment.
+      </div>
+      <div class="method-item">
+        <strong>Regression</strong><br>
+        OLS: mean annual tuition growth rate (9-yr) on log(endowment). Separate estimates for public and private sub-sectors. β and p-values reported in each visualization.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Footer ── -->
+<footer class="site-footer">
+  <div>Research study — endowment wealth and tuition growth at U.S. universities &amp; medical schools</div>
+  <div style="margin-top:6px;">
+    Data sources: AAMC · NACUBO-Commonfund · BRIMR · BLS CPI-U · Congressional Budget Office (OBBB projections)
+  </div>
+  <div style="margin-top:8px; font-size:0.72rem; color:#475569;">
+    Tuition data: AY 2013–14 through AY 2022–23 &nbsp;|&nbsp; Endowment: NACUBO FY2022 (index-adjusted) &nbsp;|&nbsp; OBBB provisions effective July 1, 2026
+  </div>
+</footer>
+
+</body>
+</html>
