@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EPIThread Curriculum Coverage Map</title>
+
+  <!--
+  ═══════════════════════════════════════════════════════════════════
+  EPIThread Curriculum Coverage Map
+  University of Virginia School of Medicine — Epidemiology Thread
+
+  NO-CODE EDITING
+  ───────────────
+  Click "Edit map" in the toolbar to enter edit mode. Then:
+    • Click any indicator cell to cycle through states
+    • Click any topic name or session header to rename it
+    • Click meta cells (Format / Owner / Module) to edit them
+    • Click "Save copy" to download your updated file
+    • Your changes auto-save in the browser so refreshing is safe
+
+  STATES (cycle order):
+    ✓ green  = Covered (primary session)
+    ✓ gray   = Reviewed (review session)
+    !  amber  = Thin / partial
+    +  blue   = Planned addition (gap)
+    ·  dot    = Not expected in this session
+
+  GITHUB PAGES
+  ────────────
+  1. Push this file to a GitHub repository.
+  2. Settings → Pages → Source → select branch.
+  3. Live at: https://<username>.github.io/<repo>/curriculum-map.html
+
+  Last updated: April 2026
+  ═══════════════════════════════════════════════════════════════════
+  -->
+
+  <style>
+    /* ── Color tokens ── */
+    :root {
+      --bg:          #ffffff;
+      --bg-2:        #f9fafb;
+      --bg-3:        #f3f4f6;
+      --text:        #111827;
+      --text-2:      #4b5563;
+      --text-3:      #9ca3af;
+      --border:      #e5e7eb;
+      --border-2:    #d1d5db;
+
+      --green-bg:    #dcfce7;  --green-text:  #15803d;
+      --gray-bg:     #f3f4f6;  --gray-text:   #4b5563;  --gray-border: #d1d5db;
+      --amber-bg:    #fef3c7;  --amber-text:  #b45309;
+      --blue-bg:     #dbeafe;  --blue-text:   #1d4ed8;  --blue-border: #93c5fd;
+
+      --radius: 8px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:          #0f172a;  --bg-2: #1e293b;  --bg-3: #334155;
+        --text:        #f1f5f9;  --text-2: #94a3b8;  --text-3: #64748b;
+        --border:      #334155;  --border-2: #475569;
+
+        --green-bg:    #14532d;  --green-text:  #86efac;
+        --gray-bg:     #334155;  --gray-text:   #cbd5e1;  --gray-border: #475569;
+        --amber-bg:    #431407;  --amber-text:  #fcd34d;
+        --blue-bg:     #1e3a5f;  --blue-text:   #93c5fd;  --blue-border: #3b82f6;
+      }
+    }
+
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.6;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem 1.5rem;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border-2);
+      background: var(--bg-2);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .btn:hover { background: var(--bg-3); }
+    .btn-active {
+      background: var(--green-bg) !important;
+      color: var(--green-text) !important;
+      border-color: var(--green-text) !important;
+    }
+    .btn-dl { border-color: var(--blue-border); color: var(--blue-text); }
+    .btn-dl:hover { background: var(--blue-bg); }
+    .btn-reset { font-size: 11px; color: var(--text-3); border-color: var(--border); }
+    .edit-status {
+      font-size: 11px;
+      color: var(--text-3);
+      font-style: italic;
+    }
+    .edit-status.active { color: var(--green-text); }
+
+    /* ── Page header ── */
+    .page-header { margin-bottom: 1rem; }
+    .page-header h1 { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 0.2rem; }
+    .page-header p { font-size: 13px; color: var(--text-2); }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      margin-bottom: 1.25rem;
+      padding: 0.6rem 1rem;
+      background: var(--bg-2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--text-2);
+    }
+
+    /* ── Table wrapper ── */
+    .table-wrap {
+      overflow-x: auto;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+    }
+
+    /* ── Table base ── */
+    table { border-collapse: collapse; min-width: 960px; width: 100%; font-size: 12px; }
+    th, td { border-bottom: 0.5px solid var(--border); padding: 0; }
+
+    /* ── Sticky first column ── */
+    .sticky {
+      position: sticky; left: 0; z-index: 2;
+      background: var(--bg);
+      border-right: 0.5px solid var(--border-2);
+    }
+    thead .sticky { z-index: 3; background: var(--bg-2); }
+
+    /* ── Column header cells ── */
+    .col-head {
+      background: var(--bg-2);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 11px;
+      padding: 10px 8px 8px;
+      text-align: center;
+      border-left: 0.5px solid var(--border);
+      vertical-align: bottom;
+      line-height: 1.4;
+      width: 86px;
+      min-width: 86px;
+    }
+
+    /* ── Meta rows (Format / Owner / Module) ── */
+    .meta-label {
+      font-weight: 500; font-size: 10.5px; color: var(--text-2);
+      padding: 5px 10px; background: var(--bg-2); white-space: nowrap; min-width: 170px;
+    }
+    .meta-cell {
+      font-size: 10.5px; color: var(--text-2);
+      padding: 5px 6px; background: var(--bg-2);
+      text-align: center; border-left: 0.5px solid var(--border); white-space: nowrap;
+    }
+    .meta-last td, .meta-last th { border-bottom: 1px solid var(--border-2); }
+
+    /* ── Domain section header rows ── */
+    .domain-label {
+      font-weight: 600; font-size: 10px; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-2);
+      padding: 7px 10px; background: var(--bg-3);
+      border-top: 0.5px solid var(--border-2);
+    }
+    .domain-fill {
+      background: var(--bg-3);
+      border-top: 0.5px solid var(--border-2);
+      border-left: 0.5px solid var(--border);
+    }
+
+    /* ── Topic label cells ── */
+    .topic { font-size: 12px; color: var(--text); padding: 7px 10px; min-width: 170px; line-height: 1.4; }
+    .topic-planned { font-size: 12px; color: var(--blue-text); font-style: italic; padding: 7px 10px; min-width: 170px; line-height: 1.4; }
+
+    /* ── Data cells ── */
+    .cell { text-align: center; padding: 5px 6px; border-left: 0.5px solid var(--border); width: 86px; }
+
+    /* ── Icon badges ── */
+    .ic {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      font-size: 12px; font-weight: 600; line-height: 1;
+    }
+    .ck { background: var(--green-bg); color: var(--green-text); }
+    .rv { background: var(--gray-bg); color: var(--gray-text); border: 1px solid var(--gray-border); }
+    .wn { background: var(--amber-bg); color: var(--amber-text); }
+    .pl { background: var(--blue-bg); color: var(--blue-text); border: 1.5px dashed var(--blue-border); font-size: 14px; }
+    .dt { color: var(--text-3); font-size: 16px; line-height: 22px; }
+
+    /* ── Row hover ── */
+    tbody tr:hover .cell { background: var(--bg-2); }
+    tbody tr:hover .sticky { background: var(--bg-2); }
+
+    /* ── Edit mode styles ── */
+    body.editing .cell { cursor: pointer; }
+    body.editing .cell:hover {
+      background: var(--bg-3) !important;
+      outline: 2px dashed var(--border-2);
+      outline-offset: -2px;
+    }
+    body.editing .topic,
+    body.editing .topic-planned,
+    body.editing .col-head,
+    body.editing .meta-cell { cursor: text; }
+    body.editing .topic:hover,
+    body.editing .topic-planned:hover,
+    body.editing .col-head:hover,
+    body.editing .meta-cell:hover { background: var(--bg-3) !important; outline: 1px dashed var(--border-2); }
+    [contenteditable="true"] {
+      outline: 2px solid var(--blue-border) !important;
+      border-radius: 2px;
+      min-width: 40px;
+    }
+
+    /* ── Notes section ── */
+    .notes { background: var(--bg-2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; }
+    .notes h2 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 0.75rem; }
+    .notes ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .notes li { font-size: 12px; color: var(--text-2); padding-left: 1rem; position: relative; }
+    .notes li::before { content: '—'; position: absolute; left: 0; color: var(--text-3); }
+    body.editing .notes li { cursor: text; }
+    body.editing .notes li:hover { background: var(--bg-3); }
+
+    /* ── Learning objective sub-text ── */
+    .lo {
+      display: inline-block;
+      font-size: 9.5px; color: var(--text-2); line-height: 1.5;
+      padding-left: 2px;
+    }
+    .lo::before { content: '› '; color: var(--text-3); }
+
+    /* ── Print ── */
+    @media print {
+      .toolbar { display: none; }
+      body { padding: 0.5rem; font-size: 10px; }
+      .table-wrap { overflow: visible; border: none; }
+      table { min-width: unset; }
+      .sticky { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ PAGE HEADER ═══════════════════ -->
+<header class="page-header">
+  <h1>EPIThread Curriculum Coverage Map</h1>
+  <p>University of Virginia School of Medicine &nbsp;·&nbsp; Epidemiology Thread &nbsp;·&nbsp; Updated April 2026</p>
+</header>
+
+<!-- ═══════════════════ TOOLBAR ═══════════════════ -->
+<div class="toolbar">
+  <button class="btn" id="edit-btn" title="Toggle edit mode">Edit map</button>
+  <button class="btn btn-dl" id="download-btn" title="Download a copy of the current map">Save copy</button>
+  <button class="btn btn-reset" id="reset-btn" title="Clear all saved edits and reload">Reset changes</button>
+  <span class="edit-status" id="edit-status">Click "Edit map" to start making changes.</span>
+</div>
+
+<!-- ═══════════════════ LEGEND ═══════════════════ -->
+<div class="legend" role="note" aria-label="Coverage indicator legend">
+  <div class="legend-item"><span class="ic ck">✓</span> Covered — primary session</div>
+  <div class="legend-item"><span class="ic rv">✓</span> Reviewed — review session</div>
+  <div class="legend-item"><span class="ic wn">!</span> Thin — present but underdeveloped</div>
+  <div class="legend-item"><span class="ic pl">+</span> Planned — gap assigned here</div>
+  <div class="legend-item"><span class="dt">·</span> Not expected in this session</div>
+</div>
+
+<!-- ═══════════════════ TABLE ═══════════════════ -->
+<div class="table-wrap">
+<table id="map-table">
+  <thead>
+    <tr>
+      <th class="meta-label sticky" scope="col">Topic</th>
+      <th class="col-head" scope="col">Intro<br>Epi PRL</th>
+      <th class="col-head" scope="col">Intro<br>Statistics</th>
+      <th class="col-head" scope="col">Morb / Mort<br>/ Prognosis</th>
+      <th class="col-head" scope="col">Epi Review<br>(FoM)</th>
+      <th class="col-head" scope="col">Diagnostic<br>Testing</th>
+      <th class="col-head" scope="col">Outbreak</th>
+      <th class="col-head" scope="col">Epi Review<br>(MBB)</th>
+      <th class="col-head" scope="col">Epi Rev<br>(Pulm)</th>
+    </tr>
+    <tr>
+      <td class="meta-label sticky">Format</td>
+      <td class="meta-cell">Pre-recorded</td>
+      <td class="meta-cell">Lecture</td>
+      <td class="meta-cell">Lecture</td>
+      <td class="meta-cell">Review</td>
+      <td class="meta-cell">Discussion</td>
+      <td class="meta-cell">Discussion</td>
+      <td class="meta-cell">Review</td>
+      <td class="meta-cell">Review</td>
+    </tr>
+    <tr>
+      <td class="meta-label sticky">Owner</td>
+      <td class="meta-cell">K. Wells</td>
+      <td class="meta-cell">Spaeder → Enfield</td>
+      <td class="meta-cell">—</td>
+      <td class="meta-cell">R. Scharf</td>
+      <td class="meta-cell">J. Eby</td>
+      <td class="meta-cell">K. Enfield</td>
+      <td class="meta-cell">K. Enfield</td>
+      <td class="meta-cell">K. Enfield</td>
+    </tr>
+    <tr class="meta-last">
+      <td class="meta-label sticky">Module</td>
+      <td class="meta-cell">FoM</td>
+      <td class="meta-cell">FoM</td>
+      <td class="meta-cell">FoM</td>
+      <td class="meta-cell">FoM</td>
+      <td class="meta-cell">MIS</td>
+      <td class="meta-cell">MIS</td>
+      <td class="meta-cell">MBB</td>
+      <td class="meta-cell">Pulm</td>
+    </tr>
+  </thead>
+
+  <tbody>
+
+    <!-- ─── EPIDEMIOLOGY FOUNDATIONS ─── -->
+    <tr><td class="domain-label sticky">Epidemiology Foundations</td><td class="domain-fill" colspan="8"></td></tr>
+    <tr>
+      <td class="topic sticky">Definition &amp; scope of epidemiology<div class="lo-list"><div class="lo">Define the term epidemiology.</div><div class="lo">Explain how epidemiology impacts the practice of clinical medicine.</div></div></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Importance in clinical medicine<div class="lo-list"><div class="lo">Summarize the importance of epidemiology in clinical medicine.</div></div></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Climate change &amp; public health<div class="lo-list"><div class="lo">Explain why climate change is a public health concern and how epidemiology can explain the relationship between climate change and health.</div></div></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+
+    <!-- ─── DISEASE BURDEN & PROGNOSIS ─── -->
+    <tr><td class="domain-label sticky">Disease Burden &amp; Prognosis</td><td class="domain-fill" colspan="8"></td></tr>
+    <tr>
+      <td class="topic sticky">Incidence &amp; prevalence<div class="lo-list"><div class="lo">Explain the terms incidence and prevalence and how they relate to each other.</div><div class="lo">Quantify burden of disease for a community using prevalence and incidence.</div><div class="lo">Select the appropriate measure of disease burden when given a clinical scenario.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Case definitions<div class="lo-list"><div class="lo">Explain 4 methods of defining a case of disease and how they are used in clinical studies.</div><div class="lo">Investigate how incidence of disease will vary with different definitions of a case.</div><div class="lo">Select, apply, and justify a case definition given a clinical scenario and data set.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Mortality rates (crude, SMR, YLL)<div class="lo-list"><div class="lo">Define and calculate crude, proportionate, cause-specific, case-fatality, standardized mortality rate, and years of life lost.</div><div class="lo">Calculate the mortality rate and case-fatality rate.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Prognosis &amp; survival (Kaplan-Meier)<div class="lo-list"><div class="lo">Identify methods for expressing prognosis: mortality rate, case fatality, 5-year survival, median survival time, and relative survival time.</div><div class="lo">Determine median survival given a survival curve.</div><div class="lo">Interpret a Kaplan-Meier or actuarial life-table curve.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+
+    <!-- ─── STUDY DESIGN ─── -->
+    <tr><td class="domain-label sticky">Study Design</td><td class="domain-fill" colspan="8"></td></tr>
+    <tr>
+      <td class="topic sticky">RCTs — design, phases, blinding, IRB</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Cohort studies<div class="lo-list"><div class="lo">Diagram the design of cohort studies given an infectious disease exposure and outcome of interest.</div><div class="lo">List the advantages and disadvantages of cohort studies.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Case-control studies<div class="lo-list"><div class="lo">Diagram the design of case-control studies given an infectious disease exposure and outcome of interest.</div><div class="lo">List the advantages and disadvantages of case-control studies.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic-planned sticky">Cross-sectional studies ↗</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic pl" title="Planned addition">+</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+
+    <!-- ─── STATISTICAL FUNDAMENTALS ─── -->
+    <tr><td class="domain-label sticky">Statistical Fundamentals</td><td class="domain-fill" colspan="8"></td></tr>
+    <tr>
+      <td class="topic sticky">Variable types (nominal / ordinal / interval / ratio)<div class="lo-list"><div class="lo">Explain the difference between nominal, ordinal, interval, and ratio variables.</div><div class="lo">Classify a variable type when given an example.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Probability<div class="lo-list"><div class="lo">Identify three ways to express a probability: fractions, ratios, and percent.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Central tendency &amp; variability (mean, median, SD, IQR)<div class="lo-list"><div class="lo">Define measures of central tendency (mean, median, mode) and variability (range, variance, SD).</div><div class="lo">Calculate all three measures of central tendency and select the least biased for a given data set.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Normal distribution &amp; z-scores<div class="lo-list"><div class="lo">Distinguish observations that fall outside 2 standard deviations from the mean.</div><div class="lo">Understand the relationship between population mean, z-score, and probability.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Frequency distributions (normal, skewed)<div class="lo-list"><div class="lo">Differentiate between symmetrical, positively skewed, and negatively skewed frequency distributions.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+
+    <!-- ─── INFERENCE & STATISTICAL TESTING ─── -->
+    <tr><td class="domain-label sticky">Inference &amp; Statistical Testing</td><td class="domain-fill" colspan="8"></td></tr>
+    <tr>
+      <td class="topic sticky">Confidence intervals<div class="lo-list"><div class="lo">Explain 95% confidence intervals and use them to determine precision.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Hypothesis testing &amp; p-values</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Type I &amp; II error (alpha, beta)</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Statistical power &amp; sample size</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic wn" title="Thin / partial">!</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Comparative tests (t-test, chi-square, ANOVA)</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Relative risk &amp; odds ratio<div class="lo-list"><div class="lo">Calculate and interpret relative risk and odds ratio given raw data from an observational study.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Absolute risk &amp; attributable risk</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic-planned sticky">Effect size ↗</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic pl" title="Planned addition">+</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic-planned sticky">NNT / NNH (number needed to treat / harm) ↗</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic pl" title="Planned addition">+</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic-planned sticky">ARR / RRR (absolute &amp; relative risk reduction) ↗</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic pl" title="Planned addition">+</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic-planned sticky">Clinical vs. statistical significance ↗</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic pl" title="Planned addition">+</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+
+    <!-- ─── DIAGNOSTIC TESTING & SCREENING ─── -->
+    <tr><td class="domain-label sticky">Diagnostic Testing &amp; Screening</td><td class="domain-fill" colspan="8"></td></tr>
+    <tr>
+      <td class="topic sticky">Sensitivity, specificity, PPV, NPV<div class="lo-list"><div class="lo">Define and calculate sensitivity, specificity, PPV, and NPV of a diagnostic or screening test.</div><div class="lo">Select an appropriate diagnostic test for a disease given pertinent characteristics of the disease and available tests.</div><div class="lo">Define the Kappa statistic, interpret its value, and select a reliable test based on it.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Prevalence effect on PPV / NPV<div class="lo-list"><div class="lo">Predict the change in test characteristics when presented with populations with differing disease prevalences.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic rv" title="Reviewed">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Cutpoints &amp; sensitivity / specificity tradeoff<div class="lo-list"><div class="lo">Explain the relationship between sensitivity and specificity when determining the criterion of positivity for a screening test.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Lead-time &amp; length-time bias</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Likelihood ratios</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic wn" title="Thin — recommended handout only">!</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">ROC curves / AUC</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic wn" title="Thin — recommended handout only">!</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic-planned sticky">AI / algorithmic literacy (model validation, AUC in clinical tools) ↗</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic pl" title="Planned addition">+</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+
+    <!-- ─── BIAS, CONFOUNDING & VALIDITY ─── -->
+    <tr><td class="domain-label sticky">Bias, Confounding &amp; Validity</td><td class="domain-fill" colspan="8"></td></tr>
+    <tr>
+      <td class="topic sticky">Selection bias</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic wn" title="Thin — stub in stats lecture">!</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Recall / information bias</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic wn" title="Thin — stub in stats lecture">!</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Confounding</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic wn" title="Thin — empty slide in stats lecture">!</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic-planned sticky">Correlation vs. causation / Bradford Hill criteria ↗</td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic pl" title="Planned addition">+</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+
+    <!-- ─── OUTBREAK & POPULATION HEALTH ─── -->
+    <tr><td class="domain-label sticky">Outbreak &amp; Population Health</td><td class="domain-fill" colspan="8"></td></tr>
+    <tr>
+      <td class="topic sticky">R₀, herd immunity, containment<div class="lo-list"><div class="lo">Define herd immunity and R₀, and appreciate the three major factors used to calculate R₀.</div><div class="lo">Compare infectious diseases with different R₀ values when considering an epidemic outbreak.</div><div class="lo">Apply the concept of herd immunity to disease reduction; list characteristics supporting eradication via vaccination.</div><div class="lo">Explain why vaccine-preventable diseases return when immunization coverage decreases.</div><div class="lo">Distinguish between containment, elimination, and eradication of disease.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Outbreak investigation steps &amp; epidemic curves<div class="lo-list"><div class="lo">List and describe the steps to determine if a disease outbreak has occurred.</div><div class="lo">Formulate a plan to investigate and contain an outbreak when presented with a disease scenario.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+    <tr>
+      <td class="topic sticky">Endemic / epidemic / pandemic / transmission<div class="lo-list"><div class="lo">Apply the terms carrier, endemic, epidemic, and pandemic in relationship to infectious diseases.</div><div class="lo">Outline the stages of disease transmission.</div></div></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="ic ck" title="Covered">✓</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+      <td class="cell"><span class="dt">·</span></td>
+    </tr>
+
+  </tbody>
+</table>
+</div>
+
+<!-- ═══════════════════ NOTES ═══════════════════ -->
+<section class="notes">
+  <h2>Planning notes</h2>
+  <ul id="notes-list">
+    <li><strong>Intro Statistics</strong> carries the most planned additions (+): effect size, NNT/NNH, and clinical vs. statistical significance all belong here and are currently absent from the entire curriculum.</li>
+    <li><strong>Outbreak session</strong> is the natural home for ARR/RRR (alongside RR/OR) and correlation vs. causation (in the context of observational study interpretation).</li>
+    <li><strong>Diagnostic Testing session</strong> should integrate AI/algorithmic literacy — the conceptual bridge from Sn/Sp and AUC to clinical decision support tools is direct.</li>
+    <li><strong>Epi Rev (Pulm)</strong> — one hour in the Pulmonology module. Scope to be determined; use edit mode to assign topics.</li>
+    <li><strong>Morb/Mort/Prognosis</strong> source file not in folder — content inferred from review LOs. Cross-sectional study design is a natural addition.</li>
+    <li><strong>Statistical power</strong> (!) is referenced in Intro Stats but not a named learning objective and not assessed. Should be elevated to full coverage.</li>
+    <li><strong>Likelihood ratios &amp; ROC/AUC</strong> (!!) are recommended-only handouts in Diagnostic Testing. Should be elevated to required given board relevance and AI literacy connection.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+<script>
+// ── Safari fix: replace block div LO lists with inline br+span elements ──
+(function () {
+  document.querySelectorAll('td.topic, td.topic-planned').forEach(function (td) {
+    var loList = td.querySelector('.lo-list');
+    if (!loList) return;
+    var los = loList.querySelectorAll('.lo');
+    los.forEach(function (lo) {
+      var br   = document.createElement('br');
+      var span = document.createElement('span');
+      span.className   = 'lo';
+      span.textContent = lo.textContent;
+      td.insertBefore(br,   loList);
+      td.insertBefore(span, loList);
+    });
+    td.removeChild(loList);
+  });
+})();
+
+(function () {
+  var STORAGE_KEY = 'epitthread-map-v3';
+
+  // ── State cycle (click order) ──
+  var STATES = [
+    { cls: 'ic ck', char: '✓', title: 'Covered' },
+    { cls: 'ic rv', char: '✓', title: 'Reviewed' },
+    { cls: 'ic wn', char: '!',      title: 'Thin / partial' },
+    { cls: 'ic pl', char: '+',      title: 'Planned addition' },
+    { cls: 'dt',    char: '·', title: 'Not expected' }
+  ];
+
+  function getStateIndex(cell) {
+    var span = cell.querySelector('span');
+    if (!span) return 4;
+    var c = span.className;
+    if (c.indexOf('ck') >= 0) return 0;
+    if (c.indexOf('rv') >= 0) return 1;
+    if (c.indexOf('wn') >= 0) return 2;
+    if (c.indexOf('pl') >= 0) return 3;
+    return 4;
+  }
+
+  function applyState(cell, idx) {
+    var s = STATES[idx];
+    cell.innerHTML = '<span class="' + s.cls + '" title="' + s.title + '">' + s.char + '</span>';
+  }
+
+  // ── Edit mode ──
+  var editMode = false;
+  var editBtn    = document.getElementById('edit-btn');
+  var downloadBtn = document.getElementById('download-btn');
+  var resetBtn   = document.getElementById('reset-btn');
+  var statusEl   = document.getElementById('edit-status');
+
+  editBtn.addEventListener('click', function () {
+    editMode = !editMode;
+    document.body.classList.toggle('editing', editMode);
+    if (editMode) {
+      editBtn.textContent = 'Done editing';
+      editBtn.classList.add('btn-active');
+      statusEl.textContent = 'Click a cell to change its indicator. Click any label to rename it.';
+      statusEl.classList.add('active');
+    } else {
+      editBtn.textContent = 'Edit map';
+      editBtn.classList.remove('btn-active');
+      statusEl.textContent = 'Changes saved.';
+      statusEl.classList.remove('active');
+      saveState();
+    }
+  });
+
+  // ── Cell click — cycle indicator ──
+  document.getElementById('map-table').addEventListener('click', function (e) {
+    if (!editMode) return;
+    var cell = e.target.closest('.cell');
+    if (!cell) return;
+    var next = (getStateIndex(cell) + 1) % STATES.length;
+    applyState(cell, next);
+  });
+
+  // ── Text editing — topics, session names, meta cells, notes ──
+  var EDITABLE_SELECTORS = '.topic, .topic-planned, .col-head, .meta-cell';
+
+  document.getElementById('map-table').addEventListener('click', function (e) {
+    if (!editMode) return;
+    if (e.target.closest('.cell')) return; // handled above
+    var el = e.target.closest(EDITABLE_SELECTORS);
+    if (!el) return;
+    openEditor(el);
+  });
+
+  document.getElementById('notes-list').addEventListener('click', function (e) {
+    if (!editMode) return;
+    var li = e.target.closest('li');
+    if (li) openEditor(li);
+  });
+
+  function openEditor(el) {
+    if (el.contentEditable === 'true') return;
+    el.contentEditable = 'true';
+    el.focus();
+    // Move cursor to end
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  // Close editor on blur or Enter
+  document.addEventListener('blur', function (e) {
+    var el = e.target;
+    if (el.contentEditable === 'true') {
+      el.contentEditable = 'false';
+    }
+  }, true);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      var el = document.activeElement;
+      if (el && el.contentEditable === 'true') {
+        e.preventDefault();
+        el.blur();
+      }
+    }
+  });
+
+  // ── Persist to localStorage ──
+  function saveState() {
+    try {
+      var cells = document.querySelectorAll('#map-table tbody .cell');
+      var cellStates = [];
+      cells.forEach(function (c) { cellStates.push(getStateIndex(c)); });
+
+      var editable = document.querySelectorAll('#map-table ' + EDITABLE_SELECTORS);
+      var texts = [];
+      editable.forEach(function (el) { texts.push(el.innerHTML); });
+
+      var notes = document.querySelectorAll('#notes-list li');
+      var noteTexts = [];
+      notes.forEach(function (li) { noteTexts.push(li.innerHTML); });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cellStates: cellStates, texts: texts, noteTexts: noteTexts }));
+    } catch (e) {}
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var data = JSON.parse(raw);
+
+      if (data.cellStates) {
+        var cells = document.querySelectorAll('#map-table tbody .cell');
+        cells.forEach(function (c, i) {
+          if (data.cellStates[i] !== undefined) applyState(c, data.cellStates[i]);
+        });
+      }
+      if (data.texts) {
+        var editable = document.querySelectorAll('#map-table ' + EDITABLE_SELECTORS);
+        editable.forEach(function (el, i) {
+          if (data.texts[i] !== undefined) el.innerHTML = data.texts[i];
+        });
+      }
+      if (data.noteTexts) {
+        var notes = document.querySelectorAll('#notes-list li');
+        notes.forEach(function (li, i) {
+          if (data.noteTexts[i] !== undefined) li.innerHTML = data.noteTexts[i];
+        });
+      }
+    } catch (e) {}
+  }
+
+  // Auto-save every 30 seconds while editing
+  setInterval(function () { if (editMode) saveState(); }, 30000);
+
+  // ── Download current state as HTML file ──
+  downloadBtn.addEventListener('click', function () {
+    saveState(); // make sure latest is captured
+    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'curriculum-map.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    statusEl.textContent = 'File downloaded — replace your existing curriculum-map.html with it.';
+  });
+
+  // ── Reset ──
+  resetBtn.addEventListener('click', function () {
+    if (confirm('Clear all saved edits and reload the original map?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+  });
+
+  // ── Load on startup ──
+  loadState();
+  statusEl.textContent = 'Click “Edit map” to start making changes.';
+})();
+</script>
+
+</body>
+</html>
